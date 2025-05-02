@@ -1,3 +1,10 @@
+## [1.4.5](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.4...v1.4.5) (2025-05-02)
+
+
+### Bug Fixes
+
+* Remove re-exports from index.ts ([5175dcf](https://github.com/aashari/boilerplate-mcp-server/commit/5175dcfa2870bc5971a3d28da237aafb640b3b31))
+
 ## [1.4.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.3...v1.4.4) (2025-05-02)
 
 

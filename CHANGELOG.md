@@ -1,3 +1,10 @@
+## [1.4.6](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.5...v1.4.6) (2025-05-02)
+
+
+### Bug Fixes
+
+* trigger release ([9abd0cc](https://github.com/aashari/boilerplate-mcp-server/commit/9abd0cc8fb28f9d8c430edb76833db2b4c825b3f))
+
 ## [1.4.5](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.4...v1.4.5) (2025-05-02)
 
 

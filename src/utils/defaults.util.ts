@@ -4,20 +4,6 @@
  */
 
 /**
- * Default page size for all list operations.
- * This value determines how many items are returned in a single page by default.
- */
-export const DEFAULT_PAGE_SIZE = 25;
-
-/**
- * Default values for IP Address operations (Placeholder)
- */
-export const IPADDRESS_DEFAULTS = {
-	// Add any future entity-specific defaults here
-	// e.g., INCLUDE_EXTRA_FIELD: false,
-};
-
-/**
  * Apply default values to options object.
  * This utility ensures that default values are consistently applied.
  *

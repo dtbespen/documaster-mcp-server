@@ -51,11 +51,3 @@ export interface IPApiRequestOptions {
 	/** Language for names (e.g., 'en' for English) */
 	lang?: string;
 }
-
-/**
- * Interface for batch request options
- */
-export interface IPApiBatchRequestOptions extends IPApiRequestOptions {
-	/** Array of IP addresses to query */
-	ipAddresses: string[];
-}

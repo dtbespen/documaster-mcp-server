@@ -1,39 +1,54 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
-import { IpAddressToolArgs, IpAddressToolArgsType } from './ipaddress.types.js';
+import { IpAddressToolArgs } from './ipaddress.types.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
+import { z } from 'zod';
 
 import ipAddressController from '../controllers/ipaddress.controller.js';
 
 /**
- * @function getIpAddressDetails
+ * Zod schema for the tool arguments, combining the optional positional IP address
+ * and the options object.
+ */
+const GetIpDetailsToolSchema = z.object({
+	ipAddress: z
+		.string()
+		.optional()
+		.describe('IP address to lookup (omit for current IP)'),
+	...IpAddressToolArgs.shape, // Merge options schema
+});
+
+/**
+ * TypeScript type inferred from the combined tool arguments schema.
+ */
+type GetIpDetailsToolArgsType = z.infer<typeof GetIpDetailsToolSchema>;
+
+/**
+ * @function handleGetIpDetails
  * @description MCP Tool handler to retrieve details for a given IP address (or the current IP).
  *              It calls the ipAddressController to fetch the data and formats the response for the MCP.
  *
- * @param {IpAddressToolArgsType} args - Arguments provided to the tool, including the optional IP address and options.
- * @param {RequestHandlerExtra<any, any>} _extra - Additional request context (unused, typed as any).
+ * @param {GetIpDetailsToolArgsType} args - Combined arguments (ipAddress + options) provided to the tool.
  * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} Formatted response for the MCP.
  * @throws {McpError} Formatted error if the controller or service layer encounters an issue.
  */
-async function getIpAddressDetails(args: IpAddressToolArgsType) {
+async function handleGetIpDetails(args: GetIpDetailsToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/ipaddress.tool.ts',
-		'getIpAddressDetails',
+		'handleGetIpDetails',
 	);
 	methodLogger.debug(
 		`Getting IP address details for ${args.ipAddress || 'current IP'}...`,
+		args,
 	);
 
 	try {
-		// Map tool arguments to controller options
-		const controllerOptions = {
-			includeExtendedData: args.includeExtendedData,
-			useHttps: args.useHttps,
-		};
+		// Destructure options from the combined args
+		const { ipAddress, ...controllerOptions } = args;
 
-		// Call the controller with the mapped options
+		// Call the controller with the ipAddress and the options object
 		const message = await ipAddressController.get(
-			args.ipAddress,
+			ipAddress,
 			controllerOptions,
 		);
 		methodLogger.debug(`Got the response from the controller`, message);
@@ -58,7 +73,7 @@ async function getIpAddressDetails(args: IpAddressToolArgsType) {
 
 /**
  * @function registerTools
- * @description Registers the IP address lookup tool ('get-ip-details') with the MCP server.
+ * @description Registers the IP address lookup tool ('ip_get_details') with the MCP server.
  *
  * @param {McpServer} server - The MCP server instance.
  */
@@ -72,11 +87,11 @@ function registerTools(server: McpServer) {
 	server.tool(
 		'ip_get_details',
 		`Retrieves geolocation and network details for a public IP address (\`ipAddress\`). Falls back to the server's current public IP if omitted. Fetches country, city, coordinates, ISP, etc. Optionally includes extended data (\`includeExtendedData\`) like ASN, mobile/proxy/hosting detection. **Note:** Does not work for private IPs. Relies on ip-api.com. Use \`useHttps\` for paid tier.`,
-		IpAddressToolArgs.shape,
-		getIpAddressDetails,
+		GetIpDetailsToolSchema.shape, // Use the combined schema for validation
+		handleGetIpDetails, // Use the updated handler
 	);
 
-	methodLogger.debug('Successfully registered get-ip-details tool.');
+	methodLogger.debug('Successfully registered ip_get_details tool.');
 }
 
 export default { registerTools };

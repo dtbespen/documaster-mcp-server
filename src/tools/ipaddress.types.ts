@@ -1,22 +1,29 @@
 import { z } from 'zod';
 
-const IpAddressToolArgs = z.object({
-	ipAddress: z
-		.string()
-		.optional()
-		.describe('IP address to lookup (omit for current IP)'),
-	includeExtendedData: z
-		.boolean()
-		.optional()
-		.describe(
-			'Includes extended data like ASN, mobile and proxy detection',
-		),
-	useHttps: z
-		.boolean()
-		.optional()
-		.describe('Uses HTTPS for API requests (may require paid API key)'),
-});
+/**
+ * Zod schema for the IP address tool arguments.
+ */
+export const IpAddressToolArgs = z
+	.object({
+		// Note: The ipAddress itself is handled as a separate optional positional argument in the tool/CLI,
+		// not as part of the options object validated by this schema.
+		includeExtendedData: z
+			.boolean()
+			.optional()
+			.default(false)
+			.describe(
+				'Whether to include extended data (ASN, host, organization, etc.). Requires API token.',
+			),
+		useHttps: z
+			.boolean()
+			.optional()
+			.default(true)
+			.describe('Whether to use HTTPS for the API call (recommended).'),
+	})
+	.strict();
 
-type IpAddressToolArgsType = z.infer<typeof IpAddressToolArgs>;
-
-export { IpAddressToolArgs, type IpAddressToolArgsType };
+/**
+ * TypeScript type inferred from the IpAddressToolArgs Zod schema.
+ * This represents the optional arguments passed to the tool handler and controller.
+ */
+export type IpAddressToolArgsType = z.infer<typeof IpAddressToolArgs>;

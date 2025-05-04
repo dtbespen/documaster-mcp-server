@@ -49,6 +49,7 @@ export class CliTestUtil {
 					...process.env,
 					...options.env,
 					DEBUG: 'true', // Enable debug logging
+					NODE_ENV: 'test', // Ensure tests are detected
 				},
 			});
 

@@ -1,5 +1,10 @@
+import { z } from 'zod';
 import { Logger } from '../utils/logger.util.js';
-import { IPDetail, IPApiRequestOptions } from './vendor.ip-api.com.types.js';
+import {
+	IPDetail,
+	IPDetailSchema,
+	IPApiRequestOptions,
+} from './vendor.ip-api.com.types.js';
 import {
 	createApiError,
 	createUnexpectedError,
@@ -51,29 +56,63 @@ async function get(
 	methodLogger.debug(`Calling IP API for IP: ${ipAddress || 'current'}`);
 
 	try {
-		// Use the centralized fetchIpApi utility
-		const data = await fetchIpApi<
-			{ status: string; message?: string } & IPDetail
-		>(ipAddress || '', {
+		// Make the API call with correctly typed response
+		// Use a more specific type here since we know the API returns at least status + potential message
+		const rawData = await fetchIpApi<{
+			status: string;
+			message?: string;
+			[key: string]: unknown;
+		}>(ipAddress || '', {
 			useHttps: options.useHttps,
 			fields: options.fields,
 			lang: options.lang,
 		});
 
-		// Handle API-level success/failure specific to ip-api.com
-		if (data.status !== 'success') {
+		// First check API-level success/failure before Zod validation
+		// This avoids unnecessary validation errors for known API errors
+		if (rawData.status !== 'success') {
 			throw createApiError(
-				`IP API error: ${data.message || 'Unknown error'}`,
+				`IP API error: ${rawData.message || 'Unknown error'}`,
 			);
 		}
 
-		methodLogger.debug(`Received successful data from IP API`);
-		return data; // Already validated as IPDetail structure implicitly by status check
+		// Now parse with Zod for successful responses
+		try {
+			const validatedData = IPDetailSchema.parse(rawData);
+			methodLogger.debug(
+				`Received and validated successful data from IP API`,
+			);
+			return validatedData;
+		} catch (zodError) {
+			// Throw error on validation failure
+			methodLogger.error('Zod validation failed', zodError);
+			if (zodError instanceof z.ZodError) {
+				throw createApiError(
+					`API response validation failed: ${zodError.errors
+						.map((e) => `${e.path.join('.')}: ${e.message}`)
+						.join(', ')}`,
+					undefined, // No specific HTTP status for validation errors
+					zodError,
+				);
+			}
+			// Rethrow if it's not a ZodError (shouldn't happen here)
+			throw zodError;
+		}
 	} catch (error) {
-		// Log the error caught at the service level
 		methodLogger.error(`Service error fetching IP data`, error);
 
-		// Rethrow McpErrors (could be from fetchApi or the status check)
+		// Handle Zod validation errors
+		if (error instanceof z.ZodError) {
+			throw createApiError(
+				`API response validation failed: ${error.errors
+					.map((e) => `${e.path.join('.')}: ${e.message}`)
+					.join(', ')}`,
+				undefined, // No specific HTTP status for validation errors
+				error, // Include the original ZodError
+			);
+		}
+
+		// Rethrow other McpErrors
 		if (error instanceof McpError) {
 			throw error;
 		}

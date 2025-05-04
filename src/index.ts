@@ -8,9 +8,10 @@ import { createUnexpectedError } from './utils/error.util.js';
 import { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
 import { runCli } from './cli/index.js';
 
-// Import tools and resources
+// Import tools
 import ipAddressTools from './tools/ipaddress.tool.js';
-import ipLookupResources from './resources/ipaddress.resource.js';
+// Import resources
+import ipAddressResources from './resources/ipaddress.resource.js';
 
 /**
  * Boilerplate MCP Server
@@ -34,7 +35,9 @@ let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
  * @param mode The transport mode to use (stdio or sse)
  * @returns Promise that resolves to the server instance when started successfully
  */
-export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
+export async function startServer(
+	mode: 'stdio' | 'sse' = 'stdio',
+): Promise<McpServer> {
 	const serverLogger = Logger.forContext('index.ts', 'startServer');
 
 	// Load configuration
@@ -67,14 +70,15 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 		throw createUnexpectedError('SSE mode is not supported yet');
 	}
 
-	// Register tools and resources
-	serverLogger.info('Registering MCP tools and resources...');
-
+	// Register tools
+	serverLogger.info('Registering MCP tools...');
 	ipAddressTools.registerTools(serverInstance);
 	serverLogger.debug('Registered IP address tools');
 
-	ipLookupResources.registerResources(serverInstance);
-	serverLogger.debug('Registered IP lookup resources');
+	// Register resources
+	serverLogger.info('Registering MCP resources...');
+	ipAddressResources.registerResources(serverInstance);
+	serverLogger.debug('Registered IP address resources');
 
 	serverLogger.info('All tools and resources registered successfully');
 
@@ -125,6 +129,7 @@ async function main() {
 // If this file is being executed directly (not imported), run the main function
 if (require.main === module) {
 	main().catch((err) => {
+		const indexLogger = Logger.forContext('index.ts'); // Re-create logger for catch
 		indexLogger.error('Unhandled error in main process', err);
 		process.exit(1);
 	});

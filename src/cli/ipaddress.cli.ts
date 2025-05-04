@@ -1,70 +1,59 @@
 import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
-
 import ipAddressController from '../controllers/ipaddress.controller.js';
+// Import the specific type needed for controller options
+import { IpAddressToolArgsType } from '../tools/ipaddress.types.js';
+
+const logger = Logger.forContext('cli/ipaddress.cli.ts');
 
 /**
  * Register IP address CLI commands
  * @param program The Commander program instance
  */
 function register(program: Command) {
-	const cliLogger = Logger.forContext('cli/ipaddress.cli.ts', 'register');
-	cliLogger.debug(`Registering IP address CLI commands...`);
+	const methodLogger = logger.forMethod('register');
+	methodLogger.debug('Registering IP address CLI commands...');
 
 	program
 		.command('get-ip-details')
 		.description(
-			`Gets geolocation and network details about an IP address or the current device.`,
+			'Gets geolocation and network details about an IP address or the current device.',
 		)
 		.argument('[ipAddress]', 'IP address to lookup (omit for current IP)')
 		.option(
-			'--include-extended',
-			'Includes extended data like ASN, mobile and proxy detection',
+			'--include-extended-data',
+			'Include extended data (ASN, host, org). Requires API token.',
 		)
 		.option(
-			'--use-https',
-			'Uses HTTPS for API requests (Requires paid API tier)',
+			'--no-use-https', // commander creates a 'useHttps' boolean, defaulting to true
+			'Use HTTP instead of HTTPS for the API call.',
 		)
-		.action(
-			async (
-				ipAddress?: string,
-				cmdOptions?: { includeExtended?: boolean; useHttps?: boolean },
-			) => {
-				const commandLogger = Logger.forContext(
-					'cli/ipaddress.cli.ts',
-					'get-ip-details',
+		.action(async (ipAddress, options) => {
+			const actionLogger = logger.forMethod('action:get-ip-details');
+			try {
+				actionLogger.debug(`CLI get-ip-details called`, {
+					ipAddress,
+					options,
+				});
+
+				// Map CLI options to the controller options type (IpAddressToolArgsType)
+				const controllerOptions: IpAddressToolArgsType = {
+					includeExtendedData: options.includeExtendedData || false,
+					useHttps: options.useHttps, // commander handles the default via --no-use-https
+				};
+
+				const result = await ipAddressController.get(
+					ipAddress,
+					controllerOptions,
 				);
-				try {
-					commandLogger.debug(
-						`Processing IP details request for ${ipAddress || 'current device'}`,
-						cmdOptions,
-					);
+				console.log(result.content);
+			} catch (error) {
+				handleCliError(error);
+			}
+		});
 
-					// Map CLI options to controller options
-					const controllerOptions = {
-						includeExtendedData:
-							cmdOptions?.includeExtended || false,
-						useHttps: cmdOptions?.useHttps || false,
-					};
-
-					commandLogger.debug(
-						'Calling controller with options',
-						controllerOptions,
-					);
-					const result = await ipAddressController.get(
-						ipAddress,
-						controllerOptions,
-					);
-					commandLogger.debug(`IP details retrieved successfully`);
-					console.log(result.content);
-				} catch (error) {
-					handleCliError(error);
-				}
-			},
-		);
-
-	cliLogger.debug('IP address CLI commands registered successfully');
+	methodLogger.debug('IP address CLI commands registered successfully');
 }
 
 export default { register };

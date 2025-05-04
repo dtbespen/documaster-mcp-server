@@ -1,3 +1,10 @@
+## [1.4.7](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.6...v1.4.7) (2025-05-04)
+
+
+### Bug Fixes
+
+* Remove unused exports identified by ts-prune ([c9fdc7d](https://github.com/aashari/boilerplate-mcp-server/commit/c9fdc7d8cb58cd79d83346655d9f8cf29a10fc27))
+
 ## [1.4.6](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.5...v1.4.6) (2025-05-02)
 
 

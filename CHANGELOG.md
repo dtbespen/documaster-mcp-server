@@ -1,3 +1,10 @@
+## [1.4.8](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.7...v1.4.8) (2025-05-04)
+
+
+### Bug Fixes
+
+* Refactor types using Zod and restore resources ([4965bd2](https://github.com/aashari/boilerplate-mcp-server/commit/4965bd2d4c301baf6a5c10b40893f7028b849a7e))
+
 ## [1.4.7](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.6...v1.4.7) (2025-05-04)
 
 

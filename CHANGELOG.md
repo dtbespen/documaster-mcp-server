@@ -1,3 +1,15 @@
+## [1.5.3](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.2...v1.5.3) (2025-05-05)
+
+
+### Bug Fixes
+
+* standardize index.ts entrypoint logic and package bin ([7f9aaf0](https://github.com/aashari/boilerplate-mcp-server/commit/7f9aaf051cf3d4d92971892e21e32e23820be90b))
+
+
+### Reverts
+
+* Revert "fix(test): Skip invalid IP test assertion on CI due to rate limits" ([be8c766](https://github.com/aashari/boilerplate-mcp-server/commit/be8c766d738c82d8e228b14da70f2ae844ad49e6))
+
 ## [1.5.2](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.1...v1.5.2) (2025-05-05)
 
 

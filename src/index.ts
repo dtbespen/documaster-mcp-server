@@ -141,10 +141,12 @@ async function main() {
 }
 
 // If this file is being executed directly (not imported), run the main function
-if (require.main === module) {
+// Use a check suitable for both CommonJS and ESM contexts
+const isMainModule = process.argv[1] && process.argv[1].endsWith('index.js');
+if (isMainModule) {
 	main().catch((err) => {
 		const indexLogger = Logger.forContext('index.ts'); // Re-create logger for catch
 		indexLogger.error('Unhandled error in main process', err);
 		process.exit(1);
 	});
-}
+} // End of main module execution check

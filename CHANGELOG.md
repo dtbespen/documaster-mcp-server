@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.3...v1.5.4) (2025-05-05)
+
+
+### Bug Fixes
+
+* improve signal handling for npx support ([72634a8](https://github.com/aashari/boilerplate-mcp-server/commit/72634a85fea332e4551dd273d29df8217f24309d))
+
 ## [1.5.3](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.2...v1.5.3) (2025-05-05)
 
 

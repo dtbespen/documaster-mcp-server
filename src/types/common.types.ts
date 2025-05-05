@@ -5,30 +5,6 @@
  */
 
 /**
- * Common pagination information for API responses.
- * This is used for providing consistent pagination details to clients.
- */
-export interface ResponsePagination {
-	/**
-	 * Cursor for the next page of results, if available.
-	 * This should be passed to subsequent requests to retrieve the next page.
-	 */
-	nextCursor?: string;
-
-	/**
-	 * Whether more results are available beyond the current page.
-	 * When true, clients should use the nextCursor to retrieve more results.
-	 */
-	hasMore: boolean;
-
-	/**
-	 * The number of items in the current result set.
-	 * This helps clients track how many items they've received.
-	 */
-	count?: number;
-}
-
-/**
  * Common response structure for controller operations.
  * All controller methods should return this structure.
  */
@@ -40,8 +16,7 @@ export interface ControllerResponse {
 	content: string;
 
 	/**
-	 * Optional pagination information for list operations.
-	 * If present, indicates that more results are available.
+	 * Optional metadata for any extra information associated with the response.
 	 */
-	pagination?: ResponsePagination;
+	metadata?: Record<string, unknown>;
 }

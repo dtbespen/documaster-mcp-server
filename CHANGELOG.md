@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.9...v1.5.0) (2025-05-05)
+
+
+### Features
+
+* **boilerplate:** add standard pagination utils and formatPagination ([cb1e004](https://github.com/aashari/boilerplate-mcp-server/commit/cb1e004fcb33eef61605983b74cf8a373018830b))
+
 ## [1.4.9](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.8...v1.4.9) (2025-05-04)
 
 

@@ -1,3 +1,16 @@
+## [1.5.2](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.1...v1.5.2) (2025-05-05)
+
+
+### Bug Fixes
+
+* Manually set version to 1.6.1 to resolve release conflict ([a96c37b](https://github.com/aashari/boilerplate-mcp-server/commit/a96c37b4ee599b1847237cba5bb8947265c563fa))
+* **test:** Skip invalid IP test assertion on CI due to rate limits ([258d2e7](https://github.com/aashari/boilerplate-mcp-server/commit/258d2e79d4f426f4264abfae3c3a65c61dbc1a06))
+
+
+### Reverts
+
+* Revert "Revert "chore: Manually set version to 1.6.0 to resolve release conflict"" ([e4d071e](https://github.com/aashari/boilerplate-mcp-server/commit/e4d071ea51f1db934298085cdfb53125c5c28915))
+
 ## [1.5.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.0...v1.5.1) (2025-05-05)
 
 

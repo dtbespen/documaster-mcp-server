@@ -1,3 +1,16 @@
+## [1.5.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.0...v1.5.1) (2025-05-05)
+
+
+### Bug Fixes
+
+* Improve cross-platform compatibility for npx execution ([d840c51](https://github.com/aashari/boilerplate-mcp-server/commit/d840c51cc94ad3d54e5c38670b774cdb7d52b8a7))
+* Log package name and version on startup ([b4534db](https://github.com/aashari/boilerplate-mcp-server/commit/b4534db227ba0e3dd7cc6b82207457b98c7030d0))
+
+
+### Performance Improvements
+
+* Update dependencies ([cbc63fe](https://github.com/aashari/boilerplate-mcp-server/commit/cbc63fe692f563a3e1b68bb136b8f567408fbf9c))
+
 # [1.5.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.4.9...v1.5.0) (2025-05-05)
 
 

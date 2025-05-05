@@ -124,6 +124,19 @@ async function main() {
 		await startServer();
 		mainLogger.info('Server is now running');
 	}
+
+	// --- Start: Add Graceful Shutdown ---
+	const shutdown = async (signal: string) => {
+		mainLogger.info(`Received ${signal}. Shutting down gracefully...`);
+		// Add any specific cleanup logic here if needed in the future
+		// For now, just exiting cleanly is the main goal
+		// No need to explicitly call server disconnect if process exits
+		process.exit(0);
+	};
+
+	process.on('SIGINT', () => shutdown('SIGINT')); // Ctrl+C
+	process.on('SIGTERM', () => shutdown('SIGTERM')); // kill command
+	// --- End: Add Graceful Shutdown ---
 }
 
 // If this file is being executed directly (not imported), run the main function

@@ -25,6 +25,7 @@ const indexLogger = Logger.forContext('index.ts');
 
 // Log initialization at debug level
 indexLogger.debug('Boilerplate MCP server module loaded');
+indexLogger.info(`Initializing ${PACKAGE_NAME} v${VERSION}`);
 
 let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;

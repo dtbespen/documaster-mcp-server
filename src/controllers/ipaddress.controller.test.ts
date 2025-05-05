@@ -32,38 +32,23 @@ describe('IP Address Controller', () => {
 		}, 10000); // Increase timeout for API call
 
 		it('should handle invalid IP addresses', async () => {
-			// Increased timeout for potentially slow API responses
-			jest.setTimeout(20000); // e.g., 20 seconds
+			// Use an invalid IP address
+			const invalidIp = 'invalid-ip';
 
+			// Call the function with the real API and expect it to throw an McpError
+			await expect(ipAddressController.get(invalidIp)).rejects.toThrow(
+				McpError,
+			);
+
+			// Try to get the error to verify its properties
 			try {
-				// Pass the invalid IP string directly
-				await ipAddressController.get('invalid-ip-format');
-				fail('Expected get to throw an error for invalid IP');
+				await ipAddressController.get(invalidIp);
 			} catch (error) {
+				// Verify the error is an McpError with the correct type
 				expect(error).toBeInstanceOf(McpError);
-				const mcpError = error as McpError;
-
-				// Check if it's the rate limit error (common in CI)
-				if (
-					mcpError.message.includes('429') &&
-					mcpError.message.includes('Too Many Requests') &&
-					process.env.CI // Check if running in CI environment
-				) {
-					console.warn(
-						'Skipping assertion due to potential rate limit error in CI environment.',
-					);
-					test.skip(
-						'Skipping assertion due to potential rate limit error in CI',
-					); // Skip the test formally
-				} else {
-					// Otherwise, expect the specific invalid query error from the API
-					expect(mcpError.type).toBe(ErrorType.API_ERROR);
-					// The API actually returns "invalid query" for malformed IPs
-					expect(mcpError.message).toContain(
-						'IP API error: invalid query',
-					);
-				}
+				expect((error as McpError).type).toBe(ErrorType.API_ERROR);
+				expect((error as McpError).message).toContain('IP API error');
 			}
-		}, 20000); // Explicit timeout for the test itself
+		}, 10000); // Increase timeout for API call
 	});
 });

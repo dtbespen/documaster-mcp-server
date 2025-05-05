@@ -3,6 +3,8 @@
  * These functions should be used by all formatters to ensure consistent formatting.
  */
 
+import type { ResponsePagination } from './pagination.util.js';
+
 /**
  * Format a date in a standardized way: YYYY-MM-DD HH:MM:SS UTC
  * @param dateString - ISO date string or Date object
@@ -128,4 +130,55 @@ function formatValue(value: unknown): string {
  */
 export function formatSeparator(): string {
 	return '---';
+}
+
+/**
+ * Formats the pagination information into a standardized footer string for CLI output.
+ *
+ * @param {ResponsePagination | undefined} pagination - The standardized pagination object.
+ * @returns {string} A formatted string summarizing pagination and next steps, or an empty string if no pagination.
+ */
+export function formatPagination(
+	pagination: ResponsePagination | undefined,
+): string {
+	if (!pagination) {
+		return '';
+	}
+
+	const {
+		count,
+		hasMore,
+		total,
+		nextCursor,
+		startAt,
+		limit,
+		nextPage,
+		entityType,
+	} = pagination;
+	const entity = entityType ? ` ${entityType.toLowerCase()}` : ' items'; // Default to 'items'
+
+	const lines: string[] = [formatSeparator()];
+
+	if (total !== undefined && total !== null) {
+		lines.push(`*Showing ${count} of ${total}${entity}.*`);
+	} else {
+		lines.push(`*Showing ${count}${entity}.*`);
+	}
+
+	if (hasMore) {
+		lines.push('More results are available.');
+		if (nextCursor) {
+			lines.push(`*Use --cursor "${nextCursor}" to view more.*`);
+		} else if (nextPage !== undefined) {
+			lines.push(`*Use --page ${nextPage} to view more.*`);
+		} else if (startAt !== undefined && limit !== undefined) {
+			const nextStartAt = startAt + limit;
+			lines.push(`*Use --start-at ${nextStartAt} to view more.*`);
+		}
+	}
+
+	// Add the standard timestamp footer at the very end
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
+
+	return lines.join('\n');
 }

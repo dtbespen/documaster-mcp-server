@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.4...v1.5.5) (2025-05-06)
+
+
+### Bug Fixes
+
+* Revert back the index.ts and package.json ([74c6e08](https://github.com/aashari/boilerplate-mcp-server/commit/74c6e08c058d09f6e885134197cbf90d47e0ccc7))
+
 ## [1.5.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.3...v1.5.4) (2025-05-05)
 
 

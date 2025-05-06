@@ -25,7 +25,6 @@ const indexLogger = Logger.forContext('index.ts');
 
 // Log initialization at debug level
 indexLogger.debug('Boilerplate MCP server module loaded');
-indexLogger.info(`Initializing ${PACKAGE_NAME} v${VERSION}`);
 
 let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
@@ -113,36 +112,6 @@ async function main() {
 	);
 	mainLogger.debug(`Config DEBUG value: ${config.get('DEBUG')}`);
 
-	// Track whether we're in server mode
-	let isServerMode = false;
-
-	// --- Start: Add Graceful Shutdown ---
-	const shutdown = async (signal: string) => {
-		mainLogger.info(`Received ${signal}. Shutting down gracefully...`);
-
-		// If we're in server mode and we have an active server instance,
-		// attempt to disconnect properly
-		if (isServerMode && serverInstance) {
-			try {
-				mainLogger.info('Disconnecting server instance...');
-				// Allow time for ongoing operations to complete
-				setTimeout(() => {
-					process.exit(0);
-				}, 500);
-			} catch (err) {
-				mainLogger.error('Error during graceful shutdown', err);
-				process.exit(1);
-			}
-		} else {
-			// Not in server mode, so safe to exit immediately
-			process.exit(0);
-		}
-	};
-
-	process.on('SIGINT', () => shutdown('SIGINT')); // Ctrl+C
-	process.on('SIGTERM', () => shutdown('SIGTERM')); // kill command
-	// --- End: Add Graceful Shutdown ---
-
 	// Check if arguments are provided (CLI mode)
 	if (process.argv.length > 2) {
 		// CLI mode: Pass arguments to CLI runner
@@ -152,19 +121,16 @@ async function main() {
 	} else {
 		// MCP Server mode: Start server with default STDIO
 		mainLogger.info('Starting in server mode');
-		isServerMode = true;
 		await startServer();
 		mainLogger.info('Server is now running');
 	}
 }
 
 // If this file is being executed directly (not imported), run the main function
-// Use a check suitable for both CommonJS and ESM contexts
-const isMainModule = process.argv[1] && process.argv[1].endsWith('index.js');
-if (isMainModule) {
+if (require.main === module) {
 	main().catch((err) => {
 		const indexLogger = Logger.forContext('index.ts'); // Re-create logger for catch
 		indexLogger.error('Unhandled error in main process', err);
 		process.exit(1);
 	});
-} // End of main module execution check
+}

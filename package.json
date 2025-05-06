@@ -11,15 +11,14 @@
 		"url": "https://github.com/aashari/boilerplate-mcp-server.git"
 	},
 	"bin": {
-		"mcp-boilerplate": "./dist/index.js"
+		"mcp-server": "./dist/index.js"
 	},
 	"scripts": {
-		"build": "rimraf dist && tsc",
+		"build": "tsc",
 		"prepare": "npm run build && chmod +x dist/index.js",
-		"postinstall": "node scripts/ensure-executable.js || true",
+		"postinstall": "chmod +x dist/index.js || true",
 		"test": "jest",
 		"test:coverage": "jest --coverage",
-		"test:cli": "jest src/cli/.*\\.cli\\.test\\.ts --runInBand --testTimeout=60000",
 		"lint": "eslint src --ext .ts --config eslint.config.mjs",
 		"format": "prettier --write 'src/**/*.ts' 'scripts/**/*.js'",
 		"publish:npm": "npm publish",
@@ -71,7 +70,6 @@
 		"nodemon": "^3.1.10",
 		"npm-check-updates": "^18.0.1",
 		"prettier": "^3.5.3",
-		"rimraf": "^6.0.1",
 		"semantic-release": "^24.2.3",
 		"ts-jest": "^29.3.2",
 		"ts-node": "^10.9.2",

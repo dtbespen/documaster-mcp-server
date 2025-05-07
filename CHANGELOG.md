@@ -1,3 +1,10 @@
+## [1.5.8](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.7...v1.5.8) (2025-05-07)
+
+
+### Performance Improvements
+
+* Update dependencies ([ee33a4c](https://github.com/aashari/boilerplate-mcp-server/commit/ee33a4cc170750594cb0c9417898a29030029943))
+
 ## [1.5.7](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.6...v1.5.7) (2025-05-06)
 
 

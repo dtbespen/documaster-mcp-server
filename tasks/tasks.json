@@ -1,0 +1,130 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Setup Project Repository",
+      "description": "Initialize the project repository using the boilerplate-mcp-server as a base.",
+      "details": "Clone the boilerplate-mcp-server repository from GitHub. Set up the project structure as outlined in the PRD, ensuring all necessary directories and files are in place. Initialize a new Git repository and commit the initial setup.",
+      "testStrategy": "Verify the project structure matches the PRD specifications and that the repository is correctly initialized with Git.",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "done",
+      "subtasks": []
+    },
+    {
+      "id": 2,
+      "title": "Implement MCP Server with Stdio Support",
+      "description": "Develop the MCP server to support stdio transport using JSON-RPC 2.0.",
+      "details": "Utilize Node.js and TypeScript to implement the MCP server. Ensure compatibility with the Model Context Protocol – Basic Profile (version 2025-03-26) using JSON-RPC 2.0 over stdio. Implement request, response, and notification message structures as specified.",
+      "testStrategy": "Create unit tests to validate JSON-RPC message handling and stdio communication. Use mock clients to simulate AI-assistant interactions.",
+      "priority": "high",
+      "dependencies": [
+        1
+      ],
+      "status": "done",
+      "subtasks": []
+    },
+    {
+      "id": 3,
+      "title": "Integrate OAuth2 Authentication",
+      "description": "Implement OAuth2-based authentication for secure access to the Documaster API.",
+      "details": "Implement OAuth2 Client Credentials Flow for server-to-server authentication with Documaster API. Ensure the server can acquire, cache, and auto-renew access tokens. Handle token expiration (based on expires_in value or HTTP 401 responses). Store client credentials securely using environment variables.",
+      "testStrategy": "Test authentication flow using integration tests. Simulate token expiration and renewal scenarios to ensure robustness.",
+      "priority": "high",
+      "dependencies": [
+        2
+      ],
+      "status": "in-progress",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Oppsett av OAuth2 konfigurasjon",
+          "description": "Opprett konfigurasjonsfil for OAuth2 Client Credentials med nødvendige parametre fra PRD.",
+          "details": "Lag en konfigurasjonsfil som inneholder nødvendige parametre for OAuth2 autentisering med Documaster API. Inkluder client_id, client_secret, token URL, scope og andre relevante parametre. Sett opp miljøvariabler for sikker lagring av hemmeligheter.\n<info added on 2025-05-12T18:54:16.702Z>\nEtter første runde med undersøkelser i kodebasen:\n\n1) Vi kan bruke den eksisterende 'config.util.ts' for konfigurasjonsadministrering. Den støtter allerede:\n   - Miljøvariabler (process.env)\n   - .env filer i prosjektets rot\n   - Globale konfigurasjonsfiler (~/.mcp/configs.json)\n\n2) Vi vil følge boilerplate-strukturen ved å:\n   - Opprette en dokumentspesifikk konfigurasjonsfil i src/types/ for OAuth2-konfigurasjon\n   - Definere typene for OAuth2-konfigurasjonen\n   - Sette opp nødvendige miljøvariabler i .env-eksempelfil\n   \n3) Vi trenger følgende konfigurasjonsparametere:\n   - DOCUMASTER_CLIENT_ID\n   - DOCUMASTER_CLIENT_SECRET\n   - DOCUMASTER_TOKEN_URL\n   - DOCUMASTER_API_BASE_URL\n   - DOCUMASTER_SCOPE (standard vil være 'openid')\n\nImplementasjonsplan:\n1. Opprette src/types/oauth2.types.ts med konfigurasjonsdefinisjon\n2. Opprette src/utils/documaster-config.util.ts som vil hente verdiene fra eksisterende config\n3. Legge til eksempler i .env.example for hvordan man setter opp disse parametrene\n</info added on 2025-05-12T18:54:16.702Z>\n<info added on 2025-05-12T18:58:14.691Z>\nImplementasjonen av OAuth2-konfigurasjon er nå fullført. Her er en oppsummering av det som er gjort:\n\n1. Opprettet `src/types/oauth2.types.ts` med følgende typer:\n   - `OAuth2Config`: Konfigurasjon for OAuth2 Client Credentials Flow\n   - `OAuth2TokenResponse`: Struktur for token-respons fra Documaster API\n   - `CachedToken`: Utvidet token-respons med ekstra metadata for caching\n\n2. Opprettet `src/utils/documaster-config.util.ts` som:\n   - Bruker den eksisterende `config.util.ts` for å hente miljøvariabler\n   - Validerer at alle nødvendige konfigurasjonsparametere er tilgjengelige\n   - Returnerer et typet konfigurasjonsobjekt for bruk i OAuth2-servicen\n\n3. Opprettet `scripts/env.example` med eksempler på miljøvariabler:\n   - DOCUMASTER_CLIENT_ID\n   - DOCUMASTER_CLIENT_SECRET\n   - DOCUMASTER_TOKEN_URL\n   - DOCUMASTER_API_BASE_URL\n   - DOCUMASTER_SCOPE\n\nDenne implementasjonen følger boilerplate-mønsteret med:\n- Klare typedefinisjon i egne filer\n- Singleton-instanser for konfigurasjonsklasser\n- Robust feilhåndtering med spesifikke feilmeldinger\n- Logger-integrasjon for debugging og feilsøking\n\nKonfigurasjonen er nå klar til å bli brukt i OAuth2-autentiseringsservicen som vil bli implementert i neste deloppgave.\n</info added on 2025-05-12T18:58:14.691Z>",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 3
+        },
+        {
+          "id": 2,
+          "title": "Implementer OAuth2 autentiseringsservice",
+          "description": "Implementer autentiseringsservice med token-håndtering.",
+          "details": "Opprett en OAuth2Service som håndterer autentisering mot Documaster API. Implementer metoder for å hente access token, validere token, og håndtere token-utløp. Følg Client Credentials-flyten som beskrevet i PRD med riktig HTTP-forespørsel med parametrene grant_type=client_credentials, client_id, client_secret og scope=openid.\n<info added on 2025-05-12T19:02:46.281Z>\nImplementasjonen av OAuth2-autentiseringsservicen er nå fullført. Her er en oppsummering av det som er gjort:\n\n1. Installert `axios` for HTTP-forespørsler:\n   ```bash\n   npm install axios --save\n   ```\n\n2. Opprettet `src/services/documaster.oauth2.service.ts` som:\n   - Implementerer OAuth2 Client Credentials-flyten som beskrevet i PRD\n   - Håndterer token-caching og automatisk fornyelse\n   - Fornyer token når det er 5 minutter til utløp\n   - Håndterer feil på en robust måte med detaljerte feilmeldinger\n   - Eksponerer metoder for å hente token og Authorization-header\n   - Tilbyr en metode for å invalidere token ved behov (f.eks. ved HTTP 401)\n\n3. Opprettet `src/services/documaster.oauth2.service.test.ts` med:\n   - Enhetstester for alle hovedfunksjonene\n   - Mocking av avhengigheter (axios, config)\n   - Test av token-caching og fornyelse\n   - Test av feilhåndtering\n\nServicen følger boilerplate-mønsteret med:\n- Singleton-instans for global tilgang\n- Robust feilhåndtering\n- Logger-integrasjon for debugging og feilsøking\n- Klar separasjon av ansvar\n\nOAuth2-servicen er nå klar til å bli brukt i Documaster API-forespørsler, og vil automatisk håndtere autentisering, token-caching og fornyelse.\n</info added on 2025-05-12T19:02:46.281Z>",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 3
+        },
+        {
+          "id": 3,
+          "title": "Token-caching og automatisk fornyelse",
+          "description": "Implementer token-caching og automatisk fornyelse.",
+          "details": "Implementer en mekanisme for å cache access tokens og automatisk fornye dem før de utløper, basert på expires_in-verdien fra token-responsen. Forny tokenet når det er 5 minutter til utløp eller når en forespørsel returnerer HTTP 401, som beskrevet i PRD.",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 3
+        },
+        {
+          "id": 4,
+          "title": "Integrasjon med MCP-verktøy",
+          "description": "Integrer OAuth2-servicen med MCP-verktøyene.",
+          "details": "Gjør OAuth2-servicen tilgjengelig for MCP-verktøyene, slik at de kan bruke den til å autentisere forespørsler til Documaster API. Implementer en clean architecture der controllers kan hente tokens fra autentiserings-servicen.",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 3
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Develop Documaster Full Text Search Tool",
+      "description": "Create the full text search tool for querying the Documaster archive.",
+      "details": "Implement the full text search tool using the specified HTTP endpoint POST /noark5/v1/full-text/search. Use zod for input validation and handle OAuth2 token management. Format results in Markdown for AI-assistant consumption.",
+      "testStrategy": "Perform end-to-end tests with various search queries. Validate input schema and output formatting.",
+      "priority": "medium",
+      "dependencies": [
+        3
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 5,
+      "title": "Develop Documaster Query Tool",
+      "description": "Implement the query tool for retrieving detailed information about specific Documaster entities.",
+      "details": "Develop the query tool using the HTTP endpoint POST /noark5/v1/query. Implement input validation with zod and handle both direct ID lookups and parameterized queries. Ensure results are formatted correctly for AI-assistant use.",
+      "testStrategy": "Conduct integration tests with different entity types and query parameters. Verify correct handling of ID lookups and query responses.",
+      "priority": "medium",
+      "dependencies": [
+        4
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Implement Progress Reporting and Logging",
+      "description": "Add progress reporting and structured logging to the MCP server.",
+      "details": "Use the utils/logger.util.ts for structured logging. Implement progress notifications for long-running queries. Ensure logs include requestId, toolName, duration, and status.",
+      "testStrategy": "Check logs for completeness and accuracy during various operations. Validate progress notifications are sent correctly during long queries.",
+      "priority": "medium",
+      "dependencies": [
+        5
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 7,
+      "title": "Write Documentation and Examples",
+      "description": "Create comprehensive documentation and usage examples for the MCP server and tools.",
+      "details": "Document the setup, configuration, and usage of the MCP server and tools. Include examples for common operations and integration scenarios. Ensure documentation is clear and accessible.",
+      "testStrategy": "Review documentation for completeness and clarity. Test examples to ensure they work as described.",
+      "priority": "low",
+      "dependencies": [
+        6
+      ],
+      "status": "pending",
+      "subtasks": []
+    }
+  ]
+}

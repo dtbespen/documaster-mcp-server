@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Implement Progress Reporting and Logging
+# Status: pending
+# Dependencies: 5
+# Priority: medium
+# Description: Add progress reporting and structured logging to the MCP server.
+# Details:
+Use the utils/logger.util.ts for structured logging. Implement progress notifications for long-running queries. Ensure logs include requestId, toolName, duration, and status.
+
+# Test Strategy:
+Check logs for completeness and accuracy during various operations. Validate progress notifications are sent correctly during long queries.

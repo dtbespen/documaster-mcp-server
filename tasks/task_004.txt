@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Develop Documaster Full Text Search Tool
+# Status: pending
+# Dependencies: 3
+# Priority: medium
+# Description: Create the full text search tool for querying the Documaster archive.
+# Details:
+Implement the full text search tool using the specified HTTP endpoint POST /noark5/v1/full-text/search. Use zod for input validation and handle OAuth2 token management. Format results in Markdown for AI-assistant consumption.
+
+# Test Strategy:
+Perform end-to-end tests with various search queries. Validate input schema and output formatting.

@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Prosjektstruktur og Kodeoptimalisering
+
+---
+description: Retningslinjer for å vedlikeholde en optimal mappestruktur og identifisere overflødig kode
+globs: **/*
+alwaysApply: true
+---
+
+## Generelle prinsipper
+
+- **Prosjektstrukturen skal være ryddig og minimalistisk**
+  - Hver mappe og fil skal ha en klar hensikt
+  - Unngå duplisering av kode og filer
+  - Fjern kode og filer som ikke lenger er i bruk
+
+- **Før hver implementasjon, evaluer den eksisterende strukturen**
+  - Ta et skritt tilbake og vurder om en ny fil/mappe virkelig er nødvendig
+  - Undersøk om funksjonaliteten kan oppnås ved å utvide eksisterende komponenter
+
+- **Jevnlig sjekk for overflødige komponenter**
+  - Verifiser at alle mapper og filer faktisk brukes i prosjektet
+  - Kjør verifiseringer ved naturlige tidspunkter som fullførte oppgaver, eller når vi skal starte på nye større endringer/områder
+  - Dette inkluderer både kildekode og konfigurasjonsfiler
+
+## Konfigurasjonsfiler
+
+- **Vurder hvordan konfigurasjonsfiler faktisk brukes av verktøyene**
+  - For MCP-konfigurasjon, sjekk hvordan Cursor faktisk laster inn konfigurasjonene
+  - Prioriter hovedkonfigurasjonsfilen (`.cursor/mcp.json`) over separate filer
+
+- **Spesifikt for Cursor MCP-konfigurasjon:**
+  - Cursor kan bruke enten:
+    1. `.cursor/mcp.json` med en `mcpServers`-objekt som definerer alle tilgjengelige servere
+    2. `.cursor/mcp/[server-name].json` individuelle filer for hver server
+  - Duplisering av disse er unødvendig og kan føre til forvirring
+  - Anbefaling: Konsolider til kun én av disse tilnærmingene
+
+## Kildekode
+
+- **Organiser kode logisk etter funksjonalitet**
+  - Relaterte komponenter bør være samlet
+  - Unngå spredning av relatert logikk over mange forskjellige mapper
+
+- **Vurder størrelsen på kildekodefiler**
+  - For store filer (>300 linjer) bør vurderes for oppdeling
+  - For små filer (<20 linjer) bør vurderes for sammenslåing med relatert kode
+
+## Overflødig kode
+
+- **Identifiser og fjern "død kode"**
+  - Kode som aldri kjøres eller som er kommentert ut
+  - Ubrukte importerklæringer
+  - Funksjoner som defineres men aldri kalles
+
+- **Sjekk regelmessig for utdaterte avhengigheter**
+  - Pakker som er installert men ikke brukt i koden
+  - Pakker med overlappende funksjonalitet
+
+## Periodisk gjennomgang
+
+- **Utfør en fullstendig gjennomgang av prosjektstrukturen ved viktige milepæler**
+  - Før større endringer eller utvidelser
+  - Etter fullføring av hovedfunksjoner
+  - Før publisering av nye versjoner
+
+- **Dokumenter beslutninger om struktur**
+  - Skriv ned begrunnelser for strukturelle valg
+  - Dette hjelper fremtidige utviklere med å forstå hvorfor prosjektet er organisert slik det er
+
+## Spesifikke sjekklister
+
+- **For MCP-relaterte prosjekter:**
+  - Bruk `.cursor/mcp.json` for MCP-serverkonfigurasjon
+  - Kun bruk `.cursor/mcp/[server-name].json` hvis det er en spesifikk grunn til å holde konfigurasjonen separat
+  - Unngå duplisering av serverkonfigurasjon i begge plasseringer
+  - Oppdater README-dokumentasjonen for å reflektere din valgte konfigurasjonsstrategi
+
+- **For TypeScript-prosjekter:**
+  - Verifiser at `tsconfig.json` inkluderer riktige inkluderings-/ekskluderingsmønstre
+  - Sjekk at byggmål (`outDir`) ikke duplikerer kildekode
+  - Vurder om genererte filer (f.eks. `.js`-filer fra TypeScript) bør være med i versjonskontroll

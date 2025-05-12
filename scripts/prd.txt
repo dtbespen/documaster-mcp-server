@@ -1,0 +1,52 @@
+<context>
+# Overview
+MCP Documaster er en serverapplikasjon som implementerer Model Context Protocol (MCP) for å muliggjøre sikker og effektiv integrasjon mellom AI-assistenter (som Claude eller Cursor) og Documaster-arkivsystemet. Løsningen gir et standardisert grensesnitt for dokumenthåndtering, søk og generering, og gjør det enkelt å koble moderne AI-verktøy til virksomhetens arkivdata.
+
+# Core Features
+- **MCP-kompatibelt API for Documaster**: Tilgjengelig via stdio. Gjør det mulig for AI-assistenter å utføre avanserte spørringer, hente og manipulere arkivdata på en sikker måte.
+- **Documaster Search Tool**: Fleksibelt MCP-verktøy for fritekstsøk mot Documaster-arkivet. Søker i både metadata og filinnhold.
+- **Documaster Query Tool**: Fleksibelt MCP-verktøy for spørringer mot Documaster-arkivet (Arkiv, Arkivdel, Saksmappe, Journalpost, m.m.), med støtte for filtrering, sortering og paginering.
+- **Autentisering**: OAuth2-basert autentisering mot Documaster API for sikker tilgang.
+- **Fremdriftsrapportering og logging**: Løpende tilbakemelding til brukeren under spørringer og operasjoner.
+- **Utvidbarhet**: Enkelt å legge til nye verktøy, ressurser og prompts for fremtidige behov.
+
+# User Experience
+- **Brukerpersonas**: Utviklere og virksomheter som ønsker å koble Documaster-arkivet til AI-verktøy og automatiseringsløsninger.
+- **Brukerreise**: Brukeren starter MCP-serveren, kobler til via AI-assistent eller integrasjon, autentiserer seg og utfører søk eller operasjoner mot arkivet.
+- **UI/UX**: Typisk ingen egen UI, men fokus på tydelige feilmeldinger, fremdriftsindikatorer og enkel integrasjon.
+</context>
+<PRD>
+# Technical Architecture
+- **Systemkomponenter**: MCP-server (Node.js/TypeScript), Documaster API, AI-assistent (f.eks. Claude, Cursor)
+- **Datamodeller**: Entiteter fra Documaster (Arkiv, Arkivdel, Saksmappe, Journalpost, etc.)
+- **APIer og integrasjoner**: MCP-protokoll, Documaster REST API, OAuth2 for autentisering
+- **Infrastruktur**: Kan kjøres lokalt eller i skyen, krever tilgang til Documaster API og nødvendige nøkler
+
+# Development Roadmap
+- **MVP**:
+  - Opprett MCP-server med støtte for stdio
+  - Implementer OAuth2-autentisering til Docuamster Arkiv
+  - Lag Documaster Search Toll og Query Tool med støtte for søk, filtrering, sortering og paginering
+  - Fremdriftsrapportering og logging
+  - Dokumentasjon og eksempler
+- **Fremtidige utvidelser**:
+  - Flere MCP-verktøy for arkivering, batch-operasjoner og avansert analyse
+  - Støtte for flere autentiseringsmetoder og roller
+  - Bedre feilhåndtering og brukeropplevelse
+
+# Logical Dependency Chain
+- MCP-server og transport må være på plass før verktøy kan brukes
+- Autentisering må fungere før man kan gjøre spørringer
+- Query Tool må være på plass før man kan utvide med flere verktøy
+- Dokumentasjon og eksempler kan lages parallelt, men bør oppdateres etter hvert som funksjonalitet bygges
+
+# Risks and Mitigations
+- **Tekniske utfordringer**: Integrasjon med Documaster API og håndtering av autentisering
+- **MVP-avgrensning**: Fokusere på kjernefunksjonalitet først, utvide senere
+- **Ressurser**: Sørge for at prosjektet er modulært og lett å videreutvikle
+
+# Appendix
+- Se Documaster API-dokumentasjon for detaljer om entiteter og spørringer
+- MCP-protokollspesifikasjon
+- Eksempler på bruk og integrasjon
+</PRD> 

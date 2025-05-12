@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "documaster-mcp-server": {
+      "command": "/Users/espennergaard/.nvm/versions/node/v22.15.0/bin/node",
+      "args": [
+        "/Users/espennergaard/Documents/Prosjekter/Neo/documaster-mcp-server/dist/index.js"
+      ],
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  }
+}

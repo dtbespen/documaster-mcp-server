@@ -15,11 +15,17 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"prepare": "npm run build && chmod +x dist/index.js",
+		"predev": "npm run build",
+		"dev": "node --enable-source-maps dist/index.js",
+		"start": "node dist/index.js",
+		"test": "jest --testMatch=\"**/*(.test|.spec).ts\"",
+		"test:watch": "npm run test -- --watch",
+		"test:oauth": "npm run build && node dist/tests/services/documaster.oauth2.service.real.js",
+		"lint": "eslint . --ext .ts",
+		"prepare": "npm run build",
+		"prepublishOnly": "npm test && npm run lint",
 		"postinstall": "chmod +x dist/index.js || true",
-		"test": "jest",
 		"test:coverage": "jest --coverage",
-		"lint": "eslint src --ext .ts --config eslint.config.mjs",
 		"format": "prettier --write 'src/**/*.ts' 'scripts/**/*.js'",
 		"publish:npm": "npm publish",
 		"update:check": "npx npm-check-updates",
@@ -92,13 +98,9 @@
 	"jest": {
 		"preset": "ts-jest",
 		"testEnvironment": "node",
-		"testMatch": [
-			"**/src/**/*.test.ts"
-		],
+		"collectCoverage": true,
 		"collectCoverageFrom": [
-			"src/**/*.ts",
-			"!src/**/*.test.ts",
-			"!src/**/*.spec.ts"
+			"src/**/*.ts"
 		],
 		"coveragePathIgnorePatterns": [
 			"/node_modules/",
@@ -132,5 +134,8 @@
 			"json",
 			"node"
 		]
+	},
+	"engines": {
+		"node": ">= 16.0.0"
 	}
 }

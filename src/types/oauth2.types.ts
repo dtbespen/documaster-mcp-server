@@ -44,14 +44,14 @@ export interface OAuth2TokenResponse {
 	access_token: string;
 
 	/**
-	 * How long the access token is valid, in seconds
-	 */
-	expires_in: number;
-
-	/**
-	 * The type of token, typically "bearer"
+	 * The type of the token, typically "Bearer"
 	 */
 	token_type: string;
+
+	/**
+	 * The lifetime in seconds of the access token
+	 */
+	expires_in: number;
 
 	/**
 	 * The scope of the access token
@@ -60,16 +60,17 @@ export interface OAuth2TokenResponse {
 }
 
 /**
- * Cached OAuth2 token with expiry information
+ * Cached token with expiry information
+ * Extends the token response with additional fields for token management
  */
 export interface CachedToken extends OAuth2TokenResponse {
 	/**
-	 * Timestamp when the token was retrieved (in milliseconds since epoch)
+	 * Timestamp when the token was retrieved (in milliseconds)
 	 */
 	retrievedAt: number;
 
 	/**
-	 * Timestamp when the token will expire (in milliseconds since epoch)
+	 * Timestamp when the token will expire (in milliseconds)
 	 */
 	expiresAt: number;
 } 

@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+      "boilerplate": {
+        "command": "/Users/espennergaard/.nvm/versions/node/v22.15.0/bin/node",
+        "args": [
+          "/Users/espennergaard/Documents/Prosjekter/Neo/boilerplate-mcp-server/dist/index.js"
+        ],
+        "transport": {
+          "type": "stdio"
+        }
+      }
+    }
+  }

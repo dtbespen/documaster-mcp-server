@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Develop Documaster Full Text Search Tool
-# Status: pending
+# Status: in-progress
 # Dependencies: 3
 # Priority: medium
 # Description: Create the full text search tool for querying the Documaster archive.

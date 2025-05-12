@@ -10,6 +10,7 @@ import { runCli } from './cli/index.js';
 
 // Import tools
 import ipAddressTools from './tools/ipaddress.tool.js';
+import documasterTools from './tools/documaster.tool.js';
 // Import resources
 import ipAddressResources from './resources/ipaddress.resource.js';
 
@@ -73,12 +74,13 @@ export async function startServer(
 	// Register tools
 	serverLogger.info('Registering MCP tools...');
 	ipAddressTools.registerTools(serverInstance);
-	serverLogger.debug('Registered IP address tools');
+	documasterTools.registerTools(serverInstance);
+	serverLogger.debug('Registered all tools');
 
 	// Register resources
 	serverLogger.info('Registering MCP resources...');
 	ipAddressResources.registerResources(serverInstance);
-	serverLogger.debug('Registered IP address resources');
+	serverLogger.debug('Registered all resources');
 
 	serverLogger.info('All tools and resources registered successfully');
 

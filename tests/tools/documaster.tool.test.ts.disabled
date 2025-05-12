@@ -1,0 +1,68 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import documasterController from '../../src/controllers/documaster.controller';
+import { handleTestAuth } from '../../src/tools/documaster.tool';
+
+// Mock documaster controller
+jest.mock('../../src/controllers/documaster.controller', () => ({
+  testAuth: jest.fn(),
+  searchDocuments: jest.fn(),
+  queryDocument: jest.fn()
+}));
+
+describe('Documaster Tool Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('handleTestAuth (Internal Tool)', () => {
+    it('should return success message when authentication succeeds', async () => {
+      // Mock successful authentication
+      const mockSuccessResult = {
+        success: true,
+        message: 'Autentisering vellykket. Token-lengde: 1234 tegn. Token: mock...token',
+      };
+      ((documasterController.testAuth as any) as jest.Mock).mockResolvedValue(mockSuccessResult);
+
+      // Execute the handler
+      const result = await handleTestAuth();
+
+      // Verify results
+      expect(documasterController.testAuth).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: mockSuccessResult.message,
+          },
+        ],
+      });
+    });
+
+    it('should return error message when authentication fails', async () => {
+      // Mock failed authentication
+      const mockFailureResult = {
+        success: false,
+        message: 'Autentisering feilet: Ugyldig klient-ID',
+      };
+      ((documasterController.testAuth as any) as jest.Mock).mockResolvedValue(mockFailureResult);
+
+      // Execute the handler
+      const result = await handleTestAuth();
+
+      // Verify results
+      expect(documasterController.testAuth).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: mockFailureResult.message,
+          },
+        ],
+      });
+    });
+  });
+  
+  // Her ville vi lagt til tester for de nye funksjonene handleSearch og handleQuery,
+  // men siden de er private funksjoner som ikke eksporteres direkte, tester vi de
+  // i integrasjonstesten i stedet (documaster.tool.integration.ts)
+}); 

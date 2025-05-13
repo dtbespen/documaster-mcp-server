@@ -1,14 +1,18 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
+import documasterController from '../controllers/documaster.controller.js';
+import { formatErrorForMcpTool } from '../utils/error.util.js';
 import { 
 	DocumentmasterTestAuthArgs, 
-	DocumentmasterSearchArgs, 
-	DocumentmasterSearchArgsType,
+	DocumentmasterSearchArgs,
 	DocumentmasterQueryArgs,
+	DocumentmasterSearchArgsType,
 	DocumentmasterQueryArgsType
 } from './documaster.types.js';
-import { formatErrorForMcpTool } from '../utils/error.util.js';
-import documasterController from '../controllers/documaster.controller.js';
+import { 
+	DocumentmasterSearchResult, 
+	DocumentmasterQueryResult 
+} from '../models/documentmaster.model.js';
 
 /**
  * @function handleTestAuth
@@ -77,19 +81,34 @@ async function handleSearch(args: DocumentmasterSearchArgsType) {
 		if (searchResults.length === 0) {
 			resultText += "Ingen resultater funnet.";
 		} else {
-			resultText += `Fant ${searchResults.length} dokument(er):\n\n`;
+			resultText += `Fant ${searchResults.length} treff i arkivet:\n\n`;
 			
 			searchResults.forEach((result, index) => {
 				resultText += `#### ${index + 1}. ${result.title}\n`;
-				resultText += `- **ID**: ${result.id}\n`;
-				if (result.documentType) resultText += `- **Type**: ${result.documentType}\n`;
-				if (result.createdDate) resultText += `- **Opprettet**: ${result.createdDate}\n`;
-				if (result.summary) resultText += `- **Sammendrag**: ${result.summary}\n`;
+				
+				// Vis de hierarkiske ID-ene hvis de finnes
+				if (result.journalpostId) resultText += `- **Journalpost ID**: ${result.journalpostId}\n`;
+				if (result.saksmappeId) resultText += `- **Saksmappe ID**: ${result.saksmappeId}\n`;
+				if (result.dokumentId) resultText += `- **Dokument ID**: ${result.dokumentId}\n`;
+				
+				// Vis hvor søkeordet ble funnet
+				if (result.foundIn) resultText += `- **Funnet i**: ${result.foundIn}\n`;
+				
+				// Vis highlights - hvor i teksten treffet ble funnet
+				if (result.highlights && result.highlights.length > 0) {
+					resultText += `- **Søketreff**:\n`;
+					result.highlights.forEach(highlight => {
+						resultText += `  - ${highlight}\n`;
+					});
+				}
+				
+				// Legg til URL hvis tilgjengelig
 				if (result.url) resultText += `- **URL**: ${result.url}\n`;
+				
 				resultText += '\n';
 			});
 			
-			resultText += `\nFor å stille spørsmål til et spesifikt dokument, bruk \`query-documaster\` verktøyet med dokument-ID.`;
+			resultText += `\nFor å stille spørsmål til et spesifikt dokument eller journalpost, bruk \`query-documaster\` verktøyet med relevant ID.`;
 		}
 
 		// Return the formatted results as Markdown
@@ -120,41 +139,33 @@ async function handleQuery(args: DocumentmasterQueryArgsType) {
 		'tools/documaster.tool.ts',
 		'handleQuery',
 	);
-	methodLogger.debug(`Querying Documaster document...`, args);
+	methodLogger.debug(`Querying Documaster entities...`, args);
 
 	try {
-		// Call the controller to query the document
-		const queryResult = await documasterController.queryDocument(
-			args.documentId,
-			args.query
-		);
-		
-		methodLogger.debug(`Got query result from controller`);
+		// Build query via controller
+		const result = await documasterController.queryEntities(args);
+		methodLogger.debug(`Got query result from controller`, { count: result.results.length });
 
-		// Format the query results for display
-		let resultText = `### Svar på spørsmål om dokument\n\n`;
-		resultText += `**Dokument ID**: ${queryResult.documentId}\n`;
-		if (queryResult.documentTitle) resultText += `**Dokument tittel**: ${queryResult.documentTitle}\n`;
-		resultText += `**Spørsmål**: ${args.query}\n\n`;
-		resultText += `**Svar**:\n${queryResult.answer}\n`;
-		
-		if (queryResult.confidence) {
-			// Format confidence as percentage
-			const confidencePercent = Math.round(queryResult.confidence * 100);
-			resultText += `\n**Konfidens**: ${confidencePercent}%\n`;
+		let resultText = `### Resultater for entitetstype \`${args.type}\``;
+		if (result.hasMore) {
+			resultText += `\n\n*Merk: det finnes flere resultater. Bruk offset for å hente resten.*`;
+		}
+		if (result.results.length === 0) {
+			resultText += `\n\nIngen resultater.`;
+		} else {
+			resultText += `\n\nFant ${result.results.length} entitet(er):\n`;
+			result.results.forEach((item: any, idx: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+				resultText += `\n#### ${idx + 1}. ${item.type} (ID: ${item.id})`;
+				if (item.fields?.tittel) resultText += `\n- **Tittel**: ${item.fields.tittel}`;
+				if (item.fields?.mappeIdent) resultText += `\n- **Ident**: ${item.fields.mappeIdent}`;
+			});
 		}
 
-		// Return the formatted results as Markdown
 		return {
-			content: [
-				{
-					type: 'text' as const,
-					text: resultText,
-				},
-			],
+			content: [{ type: 'text' as const, text: resultText }],
 		};
 	} catch (error) {
-		methodLogger.error(`Error querying document`, error);
+		methodLogger.error(`Error querying entities`, error);
 		return formatErrorForMcpTool(error);
 	}
 }

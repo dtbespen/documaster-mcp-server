@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Develop Documaster Query Tool
-# Status: in-progress
+# Status: done
 # Dependencies: 4
 # Priority: medium
 # Description: Implement the query tool for retrieving detailed information about specific Documaster entities.

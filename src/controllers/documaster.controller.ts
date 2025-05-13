@@ -1,28 +1,14 @@
 import { Logger } from '../utils/logger.util.js';
 import { DocumentmasterOAuth2Service } from '../services/documaster.oauth2.service.js';
 import { documasterConfig } from '../utils/documaster-config.util.js';
+import axios from 'axios';
+import { 
+	DocumentmasterSearchResult, 
+	DocumentmasterQueryResult, 
+	DocumentmasterGenericQueryResponse 
+} from '../models/documentmaster.model.js';
 
-/**
- * Grensesnitt for søkeresultater fra Documaster
- */
-export interface DocumentmasterSearchResult {
-	id: string;
-	title: string;
-	documentType?: string;
-	createdDate?: string;
-	summary?: string;
-	url?: string;
-}
-
-/**
- * Grensesnitt for resultat av spørringer mot dokumenter i Documaster
- */
-export interface DocumentmasterQueryResult {
-	documentId: string;
-	documentTitle?: string;
-	answer: string;
-	confidence?: number;
-}
+import { DocumentmasterQueryArgsType } from '../tools/documaster.types.js';
 
 /**
  * Controller for Documaster API operations
@@ -115,32 +101,117 @@ class DocumentmasterController {
 		methodLogger.debug('Searching Documaster for documents', { query, limit, documentType });
 		
 		try {
-			// TODO: Implementer faktisk søk mot Documaster API
-			// Her må vi bruke this.getAuthHeader() for å få autorisasjonsheaderen
-			// og deretter gjøre et API-kall mot Documaster
+			// Hent auth header for API-kallet
+			const authHeader = await this.getAuthHeader();
+			const baseUrl = this.getApiBaseUrl();
 			
-			// Eksempel på mock-data som returneres midlertidig:
-			methodLogger.debug('Returning mock search results (ikke implementert)');
-			return [
-				{
-					id: 'doc-123',
-					title: 'Eksempeldokument 1',
-					documentType: documentType || 'Rapport',
-					createdDate: '2023-05-15',
-					summary: 'Dette er et eksempel på et dokument som matcher søket "' + query + '"',
-					url: 'https://documaster.com/documents/doc-123'
-				},
-				{
-					id: 'doc-456',
-					title: 'Eksempeldokument 2',
-					documentType: documentType || 'Notat',
-					createdDate: '2023-06-20',
-					summary: 'Et annet eksempel på et dokument som matcher søket "' + query + '"',
-					url: 'https://documaster.com/documents/doc-456'
+			// Bygg API-endepunktet med samme logikk som i queryEntities
+			const baseUrlRaw = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+			// Sikre at vi har port og riktig endepunkt
+			let searchEndpoint;
+			if (baseUrlRaw.includes(':8083')) {
+				// Allerede har port spesifisert i baseUrl
+				searchEndpoint = `${baseUrlRaw}/rms/api/public/noark5/v1/full-text/search`;
+			} else {
+				// Legg til port
+				const baseUrlWithPort = baseUrlRaw.replace(/(https?:\/\/[^\/]+)(.*)/, '$1:8083$2');
+				searchEndpoint = `${baseUrlWithPort}/rms/api/public/noark5/v1/full-text/search`;
+			}
+			
+			methodLogger.debug('Constructed search endpoint:', { baseUrl, baseUrlRaw, searchEndpoint });
+			
+			// Bygg søkeparametrene med riktig format for Documaster API
+			const searchBody: any = {
+				doctype: "Tekst", // Standard indekssamling ifølge dokumentasjonen
+				query  // Søkestreng
+			};
+			
+			// Legg til limit hvis spesifisert (merk: API-et krever ikke dette, så vi fjerner det fra standard parametre)
+			if (limit && limit !== 10) { // Bare sett hvis ikke standard verdi
+				searchBody.limit = limit;
+			}
+			
+			// Legg til dokumenttype-filter hvis det er definert
+			if (documentType) {
+				searchBody.filters = { documentType };
+			}
+			
+			methodLogger.debug('Calling Documaster search API', { endpoint: searchEndpoint, body: searchBody });
+			
+			// Utfør API-kallet
+			const response = await axios.post(searchEndpoint, searchBody, {
+				headers: {
+					'Authorization': authHeader,
+					'Content-Type': 'application/json',
+					'Accept': 'application/json',
+					'X-Documaster-Error-Response-Type': 'application/json'
 				}
-			].slice(0, limit);
+			});
+			
+			methodLogger.debug('Received search results from Documaster API', { 
+				resultCount: response.data.results?.length || 0,
+				totalHits: response.data.total || 0
+			});
+			
+			// Konverter API-svaret til vår format
+			const results = (response.data.results || []).map((item: any, index: number) => {
+				// Ekstraher IDs fra hierarkiet
+				const dokumentId = item.ids['Dokument.id']?.[0] || '';
+				const journalpostId = item.ids['AbstraktRegistrering.id']?.[0] || '';
+				const saksmappeId = item.ids['AbstraktMappe.id']?.[0] || '';
+				
+				// Finn ut hvor treffet ble funnet ved å se på highlights
+				const highlightKeys = Object.keys(item.highlights || {});
+				const foundIn = highlightKeys.length > 0 ? highlightKeys[0] : 'Ukjent';
+				
+				// Samle alle highlight-verdier
+				const allHighlights: string[] = [];
+				highlightKeys.forEach(key => {
+					const highlights = item.highlights[key] || [];
+					highlights.forEach((hl: string) => {
+						// Konverter highlight-markeringer til noe mer lesbart
+						const readableHighlight = hl
+							.replace(/\|=hlstart=\|/g, '**')
+							.replace(/\|=hlstop=\|/g, '**');
+						allHighlights.push(`${key}: ${readableHighlight}`);
+					});
+				});
+				
+				return {
+					id: journalpostId || saksmappeId || dokumentId || `result-${index}`,
+					dokumentId,
+					journalpostId,
+					saksmappeId,
+					title: `Treff i ${foundIn.split('.').pop() || 'dokument'}`, // Forenklet tittel basert på hvor treffet er funnet
+					documentType: 'Arkivdokument',
+					foundIn,
+					highlights: allHighlights,
+					url: journalpostId ? 
+						`${baseUrlRaw}/rms/client/entry/${journalpostId}` : 
+						(saksmappeId ? 
+							`${baseUrlRaw}/rms/client/case/${saksmappeId}` : 
+							dokumentId ? `${baseUrlRaw}/rms/client/document/${dokumentId}` : '')
+				};
+			}).slice(0, limit);
+			
+			return results;
 		} catch (error) {
 			methodLogger.error('Error searching documents', error);
+			
+			// Sjekk om feilen kommer fra Axios
+			if (axios.isAxiosError(error)) {
+				const statusCode = error.response?.status;
+				const errorData = error.response?.data;
+				methodLogger.error('API error details', { statusCode, errorData });
+				
+				throw new Error(
+					`Feil ved søk i dokumenter: API returnerte ${statusCode}. ${
+						errorData?.message || errorData?.error || errorData?.description || error.message || 'Ukjent API-feil'
+					}`
+				);
+			}
+			
 			throw new Error(`Feil ved søk i dokumenter: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
 		}
 	}
@@ -161,21 +232,119 @@ class DocumentmasterController {
 		methodLogger.debug('Querying Documaster document', { documentId, query });
 		
 		try {
-			// TODO: Implementer faktisk spørring mot Documaster API
-			// Her må vi bruke this.getAuthHeader() for å få autorisasjonsheaderen
-			// og deretter gjøre et API-kall mot Documaster
+			// Hent auth header for API-kallet
+			const authHeader = await this.getAuthHeader();
+			const baseUrl = this.getApiBaseUrl();
 			
-			// Eksempel på mock-data som returneres midlertidig:
-			methodLogger.debug('Returning mock query result (ikke implementert)');
+			// Bygg API-endepunktet for dokumentanalyse
+			const queryEndpoint = `${baseUrl}/api/v1/documents/${documentId}/query`;
+			
+			methodLogger.debug('Calling Documaster query API', { endpoint: queryEndpoint });
+			
+			// Utfør API-kallet
+			const response = await axios.post(queryEndpoint, {
+				query: query
+			}, {
+				headers: {
+					'Authorization': authHeader,
+					'Content-Type': 'application/json',
+					'Accept': 'application/json'
+				}
+			});
+			
+			methodLogger.debug('Received query result from Documaster API');
+			
+			// Konverter API-svaret til vårt format
+			// NB: Dette må tilpasses basert på faktisk API-respons fra Documaster
 			return {
 				documentId,
-				documentTitle: 'Tittel på dokument ' + documentId,
-				answer: `Dette er et mock-svar på spørringen "${query}" for dokument ${documentId}. Implementasjon av faktisk API-integrasjon gjenstår.`,
-				confidence: 0.85
+				documentTitle: response.data.documentTitle || response.data.title,
+				answer: response.data.answer || response.data.result || response.data.content || 'Ingen respons fra API',
+				confidence: response.data.confidence || response.data.score
 			};
 		} catch (error) {
 			methodLogger.error('Error querying document', error);
+			
+			// Sjekk om feilen kommer fra Axios
+			if (axios.isAxiosError(error)) {
+				const statusCode = error.response?.status;
+				const errorData = error.response?.data;
+				methodLogger.error('API error details', { statusCode, errorData });
+				
+				throw new Error(
+					`Feil ved spørring mot dokument: API returnerte ${statusCode}. ${
+						errorData?.message || errorData?.error || error.message || 'Ukjent API-feil'
+					}`
+				);
+			}
+			
 			throw new Error(`Feil ved spørring mot dokument: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
+		}
+	}
+
+	/**
+	 * Utfør generelt query-kall mot Documaster /noark5/v1/query
+	 */
+	async queryEntities(args: DocumentmasterQueryArgsType): Promise<DocumentmasterGenericQueryResponse> {
+		const methodLogger = Logger.forContext(
+			'controllers/documaster.controller.ts',
+			'queryEntities',
+		);
+		methodLogger.debug('Executing generic query', args);
+		try {
+			const authHeader = await this.getAuthHeader();
+			const baseUrl = this.getApiBaseUrl();
+			// Sørg for at vi bruker riktig URL format for Documaster API
+			const baseUrlRaw = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+			// Sikre at vi har port og riktig endepunkt
+			let endpoint;
+			if (baseUrlRaw.includes(':8083')) {
+				// Allerede har port spesifisert i baseUrl
+				endpoint = `${baseUrlRaw}/rms/api/public/noark5/v1/query`;
+			} else {
+				// Legg til port
+				const baseUrlWithPort = baseUrlRaw.replace(/(https?:\/\/[^\/]+)(.*)/, '$1:8083$2');
+				endpoint = `${baseUrlWithPort}/rms/api/public/noark5/v1/query`;
+			}
+
+			methodLogger.debug('Constructed endpoint:', { baseUrl, baseUrlRaw, endpoint });
+
+			// Build request body as provided in args
+			const body: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
+				type: args.type,
+				limit: args.limit ?? 10,
+			};
+			if (args.query) body.query = args.query;
+			if (args.parameters) body.parameters = args.parameters;
+			if (args.offset !== undefined) body.offset = args.offset;
+			if (args.joins) body.joins = args.joins;
+			if (args.sortOrder) body.sortOrder = args.sortOrder;
+
+			methodLogger.debug('Calling Documaster query API', { endpoint, body });
+
+			const response = await axios.post(endpoint, body, {
+				headers: {
+					'Authorization': authHeader,
+					'Content-Type': 'application/json',
+					'Accept': 'application/json',
+					'X-Documaster-Error-Response-Type': 'application/json',
+				},
+			});
+
+			methodLogger.debug('Received generic query response');
+			return {
+				hasMore: !!response.data.hasMore,
+				results: response.data.results ?? [],
+			};
+		} catch (error) {
+			methodLogger.error('Error during generic query', error);
+			if (axios.isAxiosError(error)) {
+				const status = error.response?.status;
+				const msg = error.response?.data?.message || error.message;
+				throw new Error(`Feil ved query: API returnerte ${status}. ${msg}`);
+			}
+			throw new Error(`Feil ved query: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
 		}
 	}
 }

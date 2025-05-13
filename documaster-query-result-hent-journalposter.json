@@ -1,0 +1,121 @@
+{
+  "hasMore": false,
+  "results": [
+    {
+      "type": "Journalpost",
+      "id": "7302560",
+      "version": "8",
+      "fields": {
+        "uuid": "f7109c5b-3dc3-4411-86e4-92ae8bc77461",
+        "opprettetDato": "2024-08-19T09:09:39.315+0200",
+        "opprettetAv": "Alexander Fosse",
+        "opprettetAvBrukerIdent": "faade122-7f08-4514-9f4b-984e7acf816b",
+        "registreringsIdent": "2024/4219",
+        "tittel": "Fluido - Test Journalpost",
+        "offentligTittel": "Fluido - Test Journalpost",
+        "registreringsDato": "2024-08-19",
+        "publiseringsstatus": "NOT_PUBLISHED",
+        "eInnsynStatus": "NOT_PUBLISHED",
+        "dokumentmedium": "E",
+        "journalansvarlig": "Alexander Fosse",
+        "journalansvarligBrukerIdent": "faade122-7f08-4514-9f4b-984e7acf816b",
+        "journalaar": 2024,
+        "journalsekvensnummer": 4219,
+        "journalpostnummer": 1,
+        "journalposttype": "I",
+        "journalstatus": "J",
+        "skjermKorrespondanseParterEInnsyn": false
+      },
+      "links": {
+        "refMappe": 7302556
+      }
+    },
+    {
+      "type": "Journalpost",
+      "id": "7368480",
+      "version": "10",
+      "fields": {
+        "uuid": "2f3d049f-83d7-4edb-86f1-24657cf9ea83",
+        "opprettetDato": "2024-09-09T20:50:58.620+0200",
+        "opprettetAv": "Espen Nergaard",
+        "opprettetAvBrukerIdent": "e1bc126c-7dde-4a37-ba05-563f394ef5c1",
+        "registreringsIdent": "2024/4696",
+        "tittel": "Klage på vedtak om tillatelse etter forurensningsloven til utslipp av kommunalt avløpsvann fra Gol tettbebyggelse i Gol kommune - underinstans",
+        "offentligTittel": "Klage på vedtak om tillatelse etter forurensningsloven til utslipp av kommunalt avløpsvann fra Gol tettbebyggelse i Gol kommune - underinstans",
+        "registreringsDato": "2024-09-09",
+        "publiseringsstatus": "NOT_PUBLISHED",
+        "eInnsynStatus": "NOT_PUBLISHED",
+        "dokumentmedium": "E",
+        "journalansvarlig": "Alexander Fosse",
+        "journalansvarligBrukerIdent": "faade122-7f08-4514-9f4b-984e7acf816b",
+        "journalaar": 2024,
+        "journalsekvensnummer": 4696,
+        "journalpostnummer": 1,
+        "journalposttype": "I",
+        "journalstatus": "J",
+        "skjermKorrespondanseParterEInnsyn": false
+      },
+      "links": {
+        "refMappe": 7368460
+      }
+    },
+    {
+      "type": "Journalpost",
+      "id": "7368994",
+      "version": "9",
+      "fields": {
+        "uuid": "94758d61-7259-41c6-9c89-2c70a618d55a",
+        "opprettetDato": "2024-09-09T22:36:52.085+0200",
+        "opprettetAv": "Espen Nergaard",
+        "opprettetAvBrukerIdent": "e1bc126c-7dde-4a37-ba05-563f394ef5c1",
+        "registreringsIdent": "2024/4697",
+        "registreringsDato": "2024-09-09",
+        "publiseringsstatus": "NOT_PUBLISHED",
+        "eInnsynStatus": "NOT_PUBLISHED",
+        "dokumentmedium": "E",
+        "skjerming": "N20",
+        "journalansvarlig": "Alexander Fosse",
+        "journalansvarligBrukerIdent": "faade122-7f08-4514-9f4b-984e7acf816b",
+        "journalaar": 2024,
+        "journalsekvensnummer": 4697,
+        "journalpostnummer": 2,
+        "journalposttype": "U",
+        "journalstatus": "J",
+        "skjermKorrespondanseParterEInnsyn": false
+      },
+      "links": {
+        "refMappe": 7368460
+      }
+    },
+    {
+      "type": "Journalpost",
+      "id": "7385487",
+      "version": "8",
+      "fields": {
+        "uuid": "9dbd0a8f-9c01-45a2-9648-2e9be0bfefa8",
+        "opprettetDato": "2024-09-17T09:16:23.607+0200",
+        "opprettetAv": "Alexander Fosse",
+        "opprettetAvBrukerIdent": "faade122-7f08-4514-9f4b-984e7acf816b",
+        "registreringsIdent": "2024/4924",
+        "offentligTittel": "Svarbrev på innsynskrav",
+        "registreringsDato": "2024-09-17",
+        "dokumentetsDato": "2024-09-17",
+        "publiseringsstatus": "NOT_PUBLISHED",
+        "eInnsynStatus": "NOT_PUBLISHED",
+        "dokumentmedium": "E",
+        "skjerming": "UOFF14-1",
+        "journalansvarlig": "Alexander Fosse",
+        "journalansvarligBrukerIdent": "faade122-7f08-4514-9f4b-984e7acf816b",
+        "journalaar": 2024,
+        "journalsekvensnummer": 4924,
+        "journalpostnummer": 1,
+        "journalposttype": "U",
+        "journalstatus": "J",
+        "skjermKorrespondanseParterEInnsyn": false
+      },
+      "links": {
+        "refMappe": 7385483
+      }
+    }
+  ]
+}

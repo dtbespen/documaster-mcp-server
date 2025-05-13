@@ -84,7 +84,7 @@
       "dependencies": [
         3
       ],
-      "status": "in-progress",
+      "status": "done",
       "subtasks": []
     },
     {
@@ -97,7 +97,7 @@
       "dependencies": [
         4
       ],
-      "status": "in-progress",
+      "status": "done",
       "subtasks": []
     },
     {
@@ -124,6 +124,19 @@
         6
       ],
       "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 8,
+      "title": "Enhance Documaster Query Tool for Advanced Queries",
+      "description": "Improve the Documaster query tool to support advanced queries based on test results, including syntax corrections and additional documentation.",
+      "details": "This task involves enhancing the existing Documaster query tool to support more advanced queries. Specifically, you need to correct the syntax for LIKE queries on the title field to ensure they function as expected. Additionally, fix the join syntax to use the correct '#' prefix for aliases, which is crucial for accurate query execution. Expand the tool's capabilities by adding more query examples that cover various use cases, ensuring users can see practical applications of the tool. Furthermore, document the query syntax and limitations clearly for end-users, providing them with a comprehensive guide to using the tool effectively. This documentation should be user-friendly and accessible, ideally integrated into the tool's interface or available as a downloadable PDF. Finally, update the existing test suite to include tests with the corrected query syntaxes, ensuring all new features and fixes are thoroughly verified.",
+      "testStrategy": "To verify the completion of this task, conduct a series of tests starting with unit tests for the LIKE and join syntax corrections. Ensure that queries using these syntaxes return the expected results without errors. Next, perform integration tests with the Documaster API to confirm that the query tool interacts correctly with the API and handles advanced queries as intended. Review the new query examples to ensure they are comprehensive and cover a wide range of use cases. Validate the documentation by having a group of end-users test it for clarity and completeness, ensuring it effectively guides them in using the query tool. Finally, run the updated test suite to confirm that all tests pass successfully, indicating that the tool's enhancements are stable and reliable.",
+      "status": "pending",
+      "dependencies": [
+        5
+      ],
+      "priority": "medium",
       "subtasks": []
     }
   ]

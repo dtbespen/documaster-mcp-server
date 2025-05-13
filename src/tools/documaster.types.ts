@@ -15,23 +15,38 @@ export const DocumentmasterTestAuthArgs = z.object({
 export type DocumentmasterTestAuthArgsType = z.infer<typeof DocumentmasterTestAuthArgs>;
 
 /**
- * Zod schema for the Documaster search tool arguments
+ * Schema for documaster-search argumemnter
  */
-export const DocumentmasterSearchArgs = z.object({
-	/** Søkestreng som skal brukes i Documaster */
-	query: z.string().describe('Søkestreng for å finne dokumenter i Documaster'),
-	
-	/** Maksimalt antall resultater som skal returneres (valgfri, standard er 10) */
-	limit: z.number().int().positive().max(100).optional().default(10)
-		.describe('Maksimalt antall resultater som skal returneres (maks 100)'),
-		
-	/** Filtrer resultater etter dokumenttype (valgfri) */
-	documentType: z.string().optional()
-		.describe('Filtrer resultater etter dokumenttype (valgfritt)')
-}).strict();
+export const DocumentmasterSearchArgs = z
+	.object({
+		query: z
+			.string()
+			.min(2, { message: 'Søkeord må bestå av minst 2 tegn.' })
+			.describe(
+				'Søkeord eller søkefrase som skal brukes for å finne relevante dokumenter i Documaster.',
+			),
+		limit: z
+			.number()
+			.int()
+			.min(1)
+			.max(50)
+			.default(10)
+			.describe(
+				'Maksimalt antall søkeresultater som skal returneres. Standard er 10.',
+			),
+		documentType: z
+			.string()
+			.optional()
+			.describe(
+				'Valgfri filtrering på dokumenttypen. Om utelatt, vil alle typer dokumenter bli inkludert.',
+			),
+	})
+	.describe(
+		'Søk etter dokumenter i Documaster basert på søkeord og valgfrie filtre.',
+	);
 
 /**
- * TypeScript type for the Documaster search tool arguments
+ * Derived type for documaster-search arguments
  */
 export type DocumentmasterSearchArgsType = z.infer<typeof DocumentmasterSearchArgs>;
 
@@ -39,11 +54,30 @@ export type DocumentmasterSearchArgsType = z.infer<typeof DocumentmasterSearchAr
  * Zod schema for the Documaster query tool arguments
  */
 export const DocumentmasterQueryArgs = z.object({
-	/** Dokument-ID som skal spørres mot */
-	documentId: z.string().describe('ID til dokumentet som skal spørres mot'),
-	
-	/** Spørring eller instruksjon for dokumentanalyse */
-	query: z.string().describe('Spørring eller instruksjon for dokumentanalyse'),
+	/** Type for hovedentiteten som skal hentes (Arkiv, Arkivdel, Saksmappe, Journalpost, Dokument, etc.) */
+	type: z.string().describe('Entitetstypen som skal hentes (f.eks. "Saksmappe", "Journalpost")'),
+
+	/** Forespørselsuttrykk basert på Documaster Query Language */
+	query: z.string().optional().describe('Spørring basert på Documaster Query Language'),
+
+	/** Objekter med parametere brukt i query-stringen. Navnene må starte med "@" */
+	parameters: z.record(z.string(), z.any()).optional().describe('Parametere brukt i queryen'),
+
+	/** Maksimalt antall resultater som skal returneres (1–500) */
+	limit: z.number().int().positive().max(500).optional().default(10)
+		.describe('Maksimalt antall resultater (1-500), standard 10'),
+
+	/** Offset for paginering */
+	offset: z.number().int().nonnegative().optional().describe('Offset for paginering'),
+
+	/** Joins-aliaser */
+	joins: z.record(z.string(), z.string()).optional().describe('Joins-aliaser for referansefelt'),
+
+	/** Sorteringsrekkefølge */
+	sortOrder: z.array(z.object({
+		field: z.string(),
+		order: z.enum(['asc','desc'])
+	})).optional().describe('Sorteringsdefinisjon')
 }).strict();
 
 /**

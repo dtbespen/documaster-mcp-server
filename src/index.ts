@@ -8,11 +8,9 @@ import { createUnexpectedError } from './utils/error.util.js';
 import { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
 import { runCli } from './cli/index.js';
 
-// Import tools
-import ipAddressTools from './tools/ipaddress.tool.js';
-import documasterTools from './tools/documaster.tool.js';
 // Import resources
 import ipAddressResources from './resources/ipaddress.resource.js';
+import documasterTools from './tools/documaster.tool.js';
 
 /**
  * Boilerplate MCP Server
@@ -73,9 +71,8 @@ export async function startServer(
 
 	// Register tools
 	serverLogger.info('Registering MCP tools...');
-	ipAddressTools.registerTools(serverInstance);
 	documasterTools.registerTools(serverInstance);
-	serverLogger.debug('Registered all tools');
+	serverLogger.debug('Registered all tools (Documaster)');
 
 	// Register resources
 	serverLogger.info('Registering MCP resources...');

@@ -9,10 +9,6 @@ import {
 	DocumentmasterSearchArgsType,
 	DocumentmasterQueryArgsType
 } from './documaster.types.js';
-import { 
-	DocumentmasterSearchResult, 
-	DocumentmasterQueryResult 
-} from '../models/documentmaster.model.js';
 
 /**
  * @function handleTestAuth
@@ -52,7 +48,7 @@ export async function handleTestAuth() {
 
 /**
  * @function handleSearch
- * @description Handler for the search-documaster MCP tool.
+ * @description Handler for the search_documaster MCP tool.
  * Searches for documents in Documaster based on the provided query.
  * 
  * @param {DocumentmasterSearchArgsType} args - The search arguments
@@ -108,7 +104,7 @@ async function handleSearch(args: DocumentmasterSearchArgsType) {
 				resultText += '\n';
 			});
 			
-			resultText += `\nFor å stille spørsmål til et spesifikt dokument eller journalpost, bruk \`query-documaster\` verktøyet med relevant ID.`;
+			resultText += `\nFor å stille spørsmål til et spesifikt dokument eller journalpost, bruk \`query_documaster\` verktøyet med relevant ID.`;
 		}
 
 		// Return the formatted results as Markdown
@@ -128,7 +124,7 @@ async function handleSearch(args: DocumentmasterSearchArgsType) {
 
 /**
  * @function handleQuery
- * @description Handler for the query-documaster MCP tool.
+ * @description Handler for the query_documaster MCP tool.
  * Queries a specific document in Documaster based on the provided query and document ID.
  * 
  * @param {DocumentmasterQueryArgsType} args - The query arguments
@@ -193,7 +189,7 @@ function registerTools(server: McpServer) {
 	
 	// Main public tools
 	server.tool(
-		'search-documaster',
+		'search_documaster',
 		`Søker i Documaster sine arkiver etter dokumenter basert på søkeord og filtreringsvalg.
 Returnerer en liste med dokumenter som matcher søket, inkludert tittel, type, opprettelsesdato og sammendrag.
 Bruk dette verktøyet når brukeren vil finne relevante dokumenter i Documaster arkivet.`,
@@ -202,9 +198,9 @@ Bruk dette verktøyet når brukeren vil finne relevante dokumenter i Documaster 
 	);
 	
 	server.tool(
-		'query-documaster',
+		'query_documaster',
 		`Stiller spørsmål til et spesifikt dokument i Documaster og returnerer et svar basert på dokumentets innhold.
-Du må angi dokument-ID (som kan hentes fra \`search-documaster\`) og et spørsmål eller en instruksjon.
+Du må angi dokument-ID (som kan hentes fra \`search_documaster\`) og et spørsmål eller en instruksjon.
 Bruk dette verktøyet når brukeren vil analysere eller stille spørsmål om innholdet i et bestemt dokument.`,
 		DocumentmasterQueryArgs.shape,
 		handleQuery,

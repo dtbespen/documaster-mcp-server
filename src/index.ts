@@ -50,9 +50,6 @@ export async function startServer(
 
 	// Log the DEBUG value to verify configuration loading
 	serverLogger.debug(`DEBUG environment variable: ${process.env.DEBUG}`);
-	serverLogger.debug(
-		`IPAPI_API_TOKEN value exists: ${Boolean(process.env.IPAPI_API_TOKEN)}`,
-	);
 	serverLogger.debug(`Config DEBUG value: ${config.get('DEBUG')}`);
 
 	serverLogger.info(`Initializing Boilerplate MCP server v${VERSION}`);
@@ -108,9 +105,6 @@ async function main() {
 
 	// Log the DEBUG value to verify configuration loading
 	mainLogger.debug(`DEBUG environment variable: ${process.env.DEBUG}`);
-	mainLogger.debug(
-		`IPAPI_API_TOKEN value exists: ${Boolean(process.env.IPAPI_API_TOKEN)}`,
-	);
 	mainLogger.debug(`Config DEBUG value: ${config.get('DEBUG')}`);
 
 	// Check if arguments are provided (CLI mode)

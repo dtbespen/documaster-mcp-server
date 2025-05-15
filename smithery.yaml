@@ -1,34 +1,43 @@
 # Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
 
-startCommand:
-  type: stdio
-  configSchema:
-    # JSON Schema defining the configuration options for the MCP.
-    type: object
-    required: []
-    properties:
-      debug:
-        type: boolean
-        default: false
-        description: Enable debug logging
-      ipapiApiToken:
-        type: string
-        default: ""
-        description: API token for the IP API service
-  commandFunction:
-    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
-    |-
-    (config) => {
-      // Setup environment variables based on provided config
-      const env = Object.assign({}, process.env);
-      if (config.debug) {
-        env.DEBUG = 'true';
-      }
-      if (config.ipapiApiToken) {
-        env.IPAPI_API_TOKEN = config.ipapiApiToken;
-      }
-      return { command: 'node', args: ['dist/index.js'], env };
-    }
-  exampleConfig:
-    debug: true
-    ipapiApiToken: YOUR_API_TOKEN
+name: documaster-mcp-server
+description: Documaster MCP Server
+version: 0.0.1
+author: Neo
+license: MIT
+private: true
+
+# Environment variables for development
+env:
+  DEBUG: "true"
+  LOG_LEVEL: "debug"
+  DOCUMASTER_BASE_URL: "https://api.documaster.com"
+  DOCUMASTER_AUTH_URL: "https://auth.documaster.com"
+  DOCUMASTER_CLIENT_ID: "your_client_id"
+  DOCUMASTER_CLIENT_SECRET: "your_client_secret"
+
+# Deployment configuration
+deploy:
+  type: "docker"
+  registry: "ghcr.io"
+  repository: "neo/documaster-mcp-server"
+
+# Development scripts
+scripts:
+  start: "node dist/index.js"
+  dev: "tsx watch src/index.ts"
+  build: "tsc"
+  test: "jest"
+  lint: "eslint src/**/*.ts"
+
+# Configure environment for CI/CD
+ci:
+  node_version: "20"
+  setup: |
+    npm ci
+  env:
+    DEBUG: "true"
+    DOCUMASTER_BASE_URL: ${{ secrets.DOCUMASTER_BASE_URL }}
+    DOCUMASTER_AUTH_URL: ${{ secrets.DOCUMASTER_AUTH_URL }}
+    DOCUMASTER_CLIENT_ID: ${{ secrets.DOCUMASTER_CLIENT_ID }}
+    DOCUMASTER_CLIENT_SECRET: ${{ secrets.DOCUMASTER_CLIENT_SECRET }}

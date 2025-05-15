@@ -126,4 +126,40 @@ export const RegistreringIdArgs = z.object({
 	/** ID til registreringen som skal hentes */
 	registreringsId: z.string().describe('ID til registreringen som skal hentes, f.eks. "7368480"'),
 });
-export type RegistreringIdArgsType = z.infer<typeof RegistreringIdArgs>; 
+export type RegistreringIdArgsType = z.infer<typeof RegistreringIdArgs>;
+
+/**
+ * Zod schema for hent_dokumentversjon_registreringsId tool arguments
+ */
+export const DokumentversjonRegistreringsIdArgs = z.object({
+	/** ID til registreringen som skal brukes i søket */
+	registreringID: z.string().describe('ID til registrering som dokumentversjoner skal hentes for'),
+});
+export type DokumentversjonRegistreringsIdArgsType = z.infer<typeof DokumentversjonRegistreringsIdArgs>;
+
+/**
+ * Zod schema for hent_dokument_id tool arguments
+ */
+export const DokumentIdArgs = z.object({
+	/** ID til dokumentet som skal hentes */
+	dokumentId: z.string().describe('ID til dokumentet som skal hentes'),
+});
+export type DokumentIdArgsType = z.infer<typeof DokumentIdArgs>;
+
+/**
+ * Zod schema for hent_dokumentversjon_registreringsIdent tool arguments
+ */
+export const DokumentversjonRegistreringsIdentArgs = z.object({
+	/** RegistreringsIdent som skal brukes i søket */
+	registreringID: z.string().describe('Registreringsnummer (registreringsIdent) som dokumentversjoner skal hentes for, f.eks. "2024/4219"'),
+});
+export type DokumentversjonRegistreringsIdentArgsType = z.infer<typeof DokumentversjonRegistreringsIdentArgs>;
+
+/**
+ * Zod schema for hent_dokumentversjon_id tool arguments
+ */
+export const DokumentversjonIdArgs = z.object({
+	/** ID til dokumentversjonen som skal hentes */
+	dokumentversjonId: z.string().describe('ID til dokumentversjonen som skal hentes'),
+});
+export type DokumentversjonIdArgsType = z.infer<typeof DokumentversjonIdArgs>; 

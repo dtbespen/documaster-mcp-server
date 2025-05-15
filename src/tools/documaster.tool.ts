@@ -33,7 +33,9 @@ import {
 	DokumentversjonRegistreringsIdentArgsType,
 	DokumentversjonIdArgsType,
 	DokumentversjonDokumentIdArgs,
-	DokumentversjonDokumentIdArgsType
+	DokumentversjonDokumentIdArgsType,
+	FilInnholdArgs,
+	FilInnholdArgsType
 } from './documaster.types.js';
 
 /**
@@ -948,6 +950,79 @@ async function handleDokumentversjonDokumentId(args: DokumentversjonDokumentIdAr
 }
 
 /**
+ * @function handleFilInnhold
+ * @description Handler for the hent_filinnhold MCP tool.
+ * Henter filinnhold basert på ID til referanseDokumentfil.
+ * 
+ * @param {FilInnholdArgsType} args - Argumentet med ID-en til filen
+ * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} Formatert filinnhold
+ */
+async function handleFilInnhold(args: FilInnholdArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/documaster.tool.ts',
+		'handleFilInnhold',
+	);
+	methodLogger.debug(`Henter filinnhold fra Documaster...`, args);
+
+	try {
+		// Kall kontrolleren for å hente filinnhold
+		const fileResult = await documasterController.getFileContent(args.filId);
+		
+		methodLogger.debug(`Fikk filinnhold fra kontrolleren`, { 
+			metadata: fileResult.metadata,
+			contentLength: fileResult.content.length 
+		});
+
+		// Format the search results for display
+		let resultText = `### Filinnhold\n\n`;
+		resultText += `**Filnavn:** ${fileResult.metadata.fileName}\n`;
+		resultText += `**Filtype:** ${fileResult.metadata.fileType}\n`;
+		
+		if (fileResult.metadata.pageCount) {
+			resultText += `**Antall sider:** ${fileResult.metadata.pageCount}\n`;
+		}
+		
+		if (fileResult.metadata.fileSize) {
+			const fileSizeKB = Math.round(fileResult.metadata.fileSize / 1024);
+			resultText += `**Filstørrelse:** ${fileSizeKB} KB\n`;
+		}
+		
+		resultText += `\n### Innhold:\n\n${fileResult.content}\n`;
+
+		// Sanitize content preview to ensure it's valid JSON-compatible text
+		// Remove any control characters or special sequences that might break JSON parsing
+		const sanitizedContent = fileResult.content
+			.replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+			.replace(/Warning:|Error:/g, '[NOTAT]: '); // Replace warning/error patterns that might break JSON
+
+		// Only show first 500 chars of sanitized content in the JSON preview
+		const contentPreview = sanitizedContent.substring(0, 500) + 
+			(sanitizedContent.length > 500 ? '...' : '');
+		
+		// Return the formatted results with proper text types
+		return {
+			content: [
+				{
+					type: 'text' as const,
+					text: resultText,
+				},
+				{
+					type: 'text' as const,
+					// Safely stringify the JSON object with sanitized content
+					text: JSON.stringify({
+						metadata: fileResult.metadata,
+						contentPreview: contentPreview
+					}, null, 2)
+				}
+			],
+		};
+	} catch (error) {
+		methodLogger.error(`Error henting av filinnhold`, error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * @function registerTools
  * @description Registers the Documaster tools with the MCP server.
  *
@@ -1090,6 +1165,14 @@ Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referans
 Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
 			DokumentversjonDokumentIdArgs.shape,
 			handleDokumentversjonDokumentId,
+		);
+
+		server.tool(
+			'hent_filinnhold',
+			`Henter filinnhold fra filen i arkivet basert på id på referanseDokumentfil. Filen er tilkoblet en dokumentversjon med feltet referanseDokumentfil.
+Konverterer og returnerer innholdet av filen som tekst, spesielt for PDF-filer.`,
+			FilInnholdArgs.shape,
+			handleFilInnhold,
 		);
 
 		logger.debug('Documaster tools registered successfully');

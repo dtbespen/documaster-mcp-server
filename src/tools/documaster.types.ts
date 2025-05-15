@@ -171,4 +171,13 @@ export const DokumentversjonDokumentIdArgs = z.object({
 	/** ID til dokumentet som skal brukes i søket */
 	dokumentId: z.string().describe('ID til dokumentet som dokumentversjoner skal hentes for'),
 }).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
-export type DokumentversjonDokumentIdArgsType = z.infer<typeof DokumentversjonDokumentIdArgs>; 
+export type DokumentversjonDokumentIdArgsType = z.infer<typeof DokumentversjonDokumentIdArgs>;
+
+/**
+ * Zod schema for hent_filinnhold tool arguments
+ */
+export const FilInnholdArgs = z.object({
+	/** ID til referanseDokumentfil fra dokumentversjon */
+	filId: z.string().describe('ID til referanseDokumentfil som skal hentes, funnet i en dokumentversjon'),
+}).describe('Henter filinnhold fra filen i arkivet basert på id på referanseDokumentfil. Filen er tilkoblet en dokumentversjon med feltet referanseDokumentfil.');
+export type FilInnholdArgsType = z.infer<typeof FilInnholdArgs>; 

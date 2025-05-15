@@ -7,6 +7,7 @@ import {
 	DocumentmasterQueryResult, 
 	DocumentmasterGenericQueryResponse 
 } from '../models/documentmaster.model.js';
+import pdfParse from 'pdf-parse';
 
 import { DocumentmasterQueryArgsType } from '../tools/documaster.types.js';
 
@@ -457,6 +458,153 @@ class DocumentmasterController {
 		});
 		
 		return resultUrl;
+	}
+
+	/**
+	 * Henter filinnhold fra dokumentarkivet basert på referanseDokumentfil-ID
+	 * Støtter parsing av PDF-filer og andre tekstbaserte formater
+	 * 
+	 * @param filId ID til referanseDokumentfil fra en dokumentversjon
+	 * @returns Filens innhold som tekst og metadata om filen
+	 */
+	async getFileContent(filId: string): Promise<{ 
+		content: string; 
+		metadata: { 
+			fileType: string; 
+			fileName: string;
+			pageCount?: number;
+			fileSize?: number;
+		} 
+	}> {
+		const methodLogger = Logger.forContext(
+			'controllers/documaster.controller.ts',
+			'getFileContent',
+		);
+		
+		methodLogger.debug('Henter filinnhold fra Documaster', { filId });
+		
+		try {
+			// Hent auth header for API-kallet
+			const authHeader = await this.getAuthHeader();
+			const baseUrl = this.getApiBaseUrl();
+			
+			// Bygg API-endepunktet
+			const baseUrlRaw = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+			
+			// Sikre at vi har port og riktig endepunkt
+			let downloadEndpoint;
+			if (baseUrlRaw.includes(':8083')) {
+				// Allerede har port spesifisert i baseUrl
+				downloadEndpoint = `${baseUrlRaw}/rms/api/public/noark5/v1/download?id=${filId}`;
+			} else {
+				// Legg til port
+				const baseUrlWithPort = baseUrlRaw.replace(/(https?:\/\/[^\/]+)(.*)/, '$1:8083$2');
+				downloadEndpoint = `${baseUrlWithPort}/rms/api/public/noark5/v1/download?id=${filId}`;
+			}
+			
+			methodLogger.debug('Constructed download endpoint:', { downloadEndpoint });
+			
+			// Utfør API-kallet med arraybuffer responseType for binærdata
+			const response = await axios.get(downloadEndpoint, {
+				headers: {
+					'Authorization': authHeader,
+					'Accept': '*/*'  // Aksepter alle content-types
+				},
+				responseType: 'arraybuffer'  // Viktig for binærfiler
+			});
+			
+			const contentType = response.headers['content-type'] || 'application/octet-stream';
+			const contentDisposition = response.headers['content-disposition'] || '';
+			
+			// Prøv å hente filnavn fra content-disposition header
+			let fileName = 'ukjent_fil';
+			const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+			if (fileNameMatch && fileNameMatch[1]) {
+				fileName = fileNameMatch[1];
+			}
+			
+			methodLogger.debug('Mottok fil fra Documaster API', { 
+				contentType,
+				contentLength: response.headers['content-length'],
+				fileName
+			});
+			
+			// Konverter filen til tekst basert på filtype
+			const fileBuffer = Buffer.from(response.data);
+			let fileContent = '';
+			let metadata: {
+				fileType: string;
+				fileName: string;
+				pageCount?: number;
+				fileSize?: number;
+			} = {
+				fileType: contentType,
+				fileName: fileName,
+				fileSize: fileBuffer.length
+			};
+			
+			if (contentType.includes('pdf')) {
+				try {
+					methodLogger.debug('Parser PDF-fil');
+					
+					// Bruk try-catch inni til å fange opp advarsler ved parsing
+					try {
+						const pdfData = await pdfParse(fileBuffer);
+						fileContent = pdfData.text || '';
+						metadata.pageCount = pdfData.numpages;
+						
+						// Rens filinnholdet for ugyldige tegn som kan påvirke JSON
+						fileContent = fileContent
+							.replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Fjern kontroll-tegn
+							.trim(); // Fjern whitespace i start og slutt
+							
+						methodLogger.debug('PDF-parsing fullført', { 
+							pageCount: pdfData.numpages,
+							textLength: fileContent.length
+						});
+					} catch (pdfWarning) {
+						// Hvis vi får en advarsel, logg den men fortsett
+						methodLogger.warn('Advarsel ved parsing av PDF', pdfWarning);
+						// Hvis vi har fått noe innhold, bruk det, ellers sett standardmelding
+						if (!fileContent) {
+							fileContent = '[PDF-innhold delvis ekstrahert med advarsler]';
+						}
+					}
+				} catch (pdfError) {
+					methodLogger.error('Feil ved parsing av PDF', pdfError);
+					throw new Error(`Kunne ikke parse PDF: ${pdfError instanceof Error ? pdfError.message : 'Ukjent feil'}`);
+				}
+			} else if (contentType.includes('text/') || 
+					contentType.includes('json') || 
+					contentType.includes('xml') || 
+					contentType.includes('html')) {
+				// For tekstfiler, konverter buffer til tekst direkte
+				fileContent = fileBuffer.toString('utf-8');
+				// Rens også innholdet her
+				fileContent = fileContent
+					.replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Fjern kontroll-tegn
+					.trim(); // Fjern whitespace i start og slutt
+					
+				methodLogger.debug('Tekstfil konvertert til streng', { textLength: fileContent.length });
+			} else {
+				// For ukjente filtyper, returner en melding om at filtypen ikke støttes
+				methodLogger.debug('Filtypen støttes ikke for tekstekstrahering', { contentType });
+				fileContent = `[Filinnhold kunne ikke ekstraheres. Filtype: ${contentType} støttes ikke for tekstekstrahering]`;
+			}
+			
+			// Sikre at vi alltid returnerer en gyldig streng
+			if (fileContent === null || fileContent === undefined) {
+				fileContent = '';
+			}
+			
+			return {
+				content: fileContent,
+				metadata: metadata
+			};
+		} catch (error) {
+			methodLogger.error('Error henting av filinnhold', error);
+			throw error;
+		}
 	}
 }
 

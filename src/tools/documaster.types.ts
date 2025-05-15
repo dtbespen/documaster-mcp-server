@@ -134,7 +134,7 @@ export type RegistreringIdArgsType = z.infer<typeof RegistreringIdArgs>;
 export const DokumentversjonRegistreringsIdArgs = z.object({
 	/** ID til registreringen som skal brukes i søket */
 	registreringID: z.string().describe('ID til registrering som dokumentversjoner skal hentes for'),
-});
+}).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
 export type DokumentversjonRegistreringsIdArgsType = z.infer<typeof DokumentversjonRegistreringsIdArgs>;
 
 /**
@@ -152,7 +152,7 @@ export type DokumentIdArgsType = z.infer<typeof DokumentIdArgs>;
 export const DokumentversjonRegistreringsIdentArgs = z.object({
 	/** RegistreringsIdent som skal brukes i søket */
 	registreringID: z.string().describe('Registreringsnummer (registreringsIdent) som dokumentversjoner skal hentes for, f.eks. "2024/4219"'),
-});
+}).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
 export type DokumentversjonRegistreringsIdentArgsType = z.infer<typeof DokumentversjonRegistreringsIdentArgs>;
 
 /**
@@ -161,5 +161,14 @@ export type DokumentversjonRegistreringsIdentArgsType = z.infer<typeof Dokumentv
 export const DokumentversjonIdArgs = z.object({
 	/** ID til dokumentversjonen som skal hentes */
 	dokumentversjonId: z.string().describe('ID til dokumentversjonen som skal hentes'),
-});
-export type DokumentversjonIdArgsType = z.infer<typeof DokumentversjonIdArgs>; 
+}).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
+export type DokumentversjonIdArgsType = z.infer<typeof DokumentversjonIdArgs>;
+
+/**
+ * Zod schema for hent_dokumentversjon_dokumentId tool arguments
+ */
+export const DokumentversjonDokumentIdArgs = z.object({
+	/** ID til dokumentet som skal brukes i søket */
+	dokumentId: z.string().describe('ID til dokumentet som dokumentversjoner skal hentes for'),
+}).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
+export type DokumentversjonDokumentIdArgsType = z.infer<typeof DokumentversjonDokumentIdArgs>; 

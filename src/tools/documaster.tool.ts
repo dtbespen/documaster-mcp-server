@@ -31,7 +31,9 @@ import {
 	DokumentversjonRegistreringsIdArgsType,
 	DokumentIdArgsType,
 	DokumentversjonRegistreringsIdentArgsType,
-	DokumentversjonIdArgsType
+	DokumentversjonIdArgsType,
+	DokumentversjonDokumentIdArgs,
+	DokumentversjonDokumentIdArgsType
 } from './documaster.types.js';
 
 /**
@@ -727,6 +729,61 @@ async function handleDokumentversjonId(args: DokumentversjonIdArgsType) {
 }
 
 /**
+ * @function handleDokumentversjonDokumentId
+ * @description Handler for the hent_dokumentversjon_dokumentId MCP tool.
+ * Fetches document versions based on document ID.
+ * 
+ * @param args - The arguments for the tool
+ * @returns A text response containing the formatted query results
+ */
+async function handleDokumentversjonDokumentId(args: DokumentversjonDokumentIdArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/documaster.tool.ts',
+		'handleDokumentversjonDokumentId',
+	);
+	methodLogger.debug(`Querying Documaster for document versions by document ID...`, { dokumentId: args.dokumentId });
+
+	try {
+		// Build query
+		const queryArgs = {
+			type: 'Dokumentversjon',
+			limit: 10,
+			query: 'refDokument.id = @dokumentId',
+			parameters: {
+				'@dokumentId': args.dokumentId
+			}
+		};
+
+		// Call the controller
+		const result = await documasterController.queryEntities(queryArgs);
+		methodLogger.debug(`Got query result from controller`, { count: result.results.length });
+
+		// Format the result for MCP response
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify({
+						results: result.results,
+						metadata: {
+							total: result.results.length,
+							hasMore: result.hasMore,
+							query: {
+								type: queryArgs.type,
+								dokumentId: args.dokumentId
+							}
+						}
+					}, null, 2)
+				}
+			]
+		};
+	} catch (error) {
+		methodLogger.error('Failed to query Documaster', { error });
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * @function registerTools
  * @description Registers the Documaster tools with the MCP server.
  *
@@ -821,7 +878,7 @@ Bruk dette verktøyet når brukeren vil finne relevante dokumenter i Documaster 
 
 	server.tool(
 		'hent_dokumentversjon_registreringsId',
-		`Henter dokumentversjon i arkivet, basert på oppgitt id på registrering.`,
+		`Henter dokumentversjon i arkivet, basert på oppgitt id på registrering. Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil").`,
 		DokumentversjonRegistreringsIdArgs.shape,
 		handleDokumentversjonRegistreringsId,
 	);
@@ -835,16 +892,23 @@ Bruk dette verktøyet når brukeren vil finne relevante dokumenter i Documaster 
 
 	server.tool(
 		'hent_dokumentversjon_registreringsIdent',
-		`Henter dokumentversjon i arkivet, basert på oppgitt registreringsnummer, som er kallt "registreringsIdent" i documaster sin datamodell.`,
+		`Henter dokumentversjon i arkivet, basert på oppgitt registreringsnummer, som er kallt "registreringsIdent" i documaster sin datamodell. Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil").`,
 		DokumentversjonRegistreringsIdentArgs.shape,
 		handleDokumentversjonRegistreringsIdent,
 	);
 
 	server.tool(
 		'hent_dokumentversjon_id',
-		`Henter dokumentversjon i arkivet, basert på oppgitt id.`,
+		`Henter dokumentversjon i arkivet, basert på oppgitt id. Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil").`,
 		DokumentversjonIdArgs.shape,
 		handleDokumentversjonId,
+	);
+
+	server.tool(
+		'hent_dokumentversjon_dokumentId',
+		`Henter dokumentversjon i arkivet, basert på oppgitt dokumentID. Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil").`,
+		DokumentversjonDokumentIdArgs.shape,
+		handleDokumentversjonDokumentId,
 	);
 
 	serverLogger.debug('Registered all Documaster tools.');

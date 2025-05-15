@@ -50,37 +50,80 @@ export const DocumentmasterSearchArgs = z
  */
 export type DocumentmasterSearchArgsType = z.infer<typeof DocumentmasterSearchArgs>;
 
+// === Mappe-verktøy argumenter ===
+
+export const MappePrimaerklasseArgs = z.object({
+	classTitle: z.string().describe('Tittel på primærklassering som mappen skal hentes på'),
+});
+export type MappePrimaerklasseArgsType = z.infer<typeof MappePrimaerklasseArgs>;
+
+export const MappeSekundaerklasseArgs = z.object({
+	classTitle: z.string().describe('Tittel på sekundærklassering som mappen skal hentes på'),
+});
+export type MappeSekundaerklasseArgsType = z.infer<typeof MappeSekundaerklasseArgs>;
+
+export const MappeSaksnummerArgs = z.object({
+	saksnummer: z.string().describe('Saksnummer (mappeIdent) som mappen skal hentes på, f.eks. "2022/109"'),
+});
+export type MappeSaksnummerArgsType = z.infer<typeof MappeSaksnummerArgs>;
+
+export const MappeIdArgs = z.object({
+	saksId: z.string().describe('ID til mappen som skal hentes, f.eks. "7368480"'),
+});
+export type MappeIdArgsType = z.infer<typeof MappeIdArgs>;
+
+// Midlertidig type for å støtte eksisterende controller.queryEntities-signatur
+export type DocumentmasterQueryArgsType = {
+	type: string;
+	query?: string;
+	parameters?: Record<string, unknown>;
+	limit?: number;
+	offset?: number;
+	joins?: Record<string, string>;
+	sortOrder?: Array<{ field: string; order: 'asc' | 'desc' }>;
+};
+
 /**
- * Zod schema for the Documaster query tool arguments
+ * Zod schema for hent_registrering_primaerklasse tool arguments
  */
-export const DocumentmasterQueryArgs = z.object({
-	/** Type for hovedentiteten som skal hentes (Arkiv, Arkivdel, Saksmappe, Journalpost, Dokument, etc.) */
-	type: z.string().describe('Entitetstypen som skal hentes (f.eks. "Saksmappe", "Journalpost")'),
-
-	/** Forespørselsuttrykk basert på Documaster Query Language */
-	query: z.string().optional().describe('Spørring basert på Documaster Query Language'),
-
-	/** Objekter med parametere brukt i query-stringen. Navnene må starte med "@" */
-	parameters: z.record(z.string(), z.any()).optional().describe('Parametere brukt i queryen'),
-
-	/** Maksimalt antall resultater som skal returneres (1–500) */
-	limit: z.number().int().positive().max(500).optional().default(10)
-		.describe('Maksimalt antall resultater (1-500), standard 10'),
-
-	/** Offset for paginering */
-	offset: z.number().int().nonnegative().optional().describe('Offset for paginering'),
-
-	/** Joins-aliaser */
-	joins: z.record(z.string(), z.string()).optional().describe('Joins-aliaser for referansefelt'),
-
-	/** Sorteringsrekkefølge */
-	sortOrder: z.array(z.object({
-		field: z.string(),
-		order: z.enum(['asc','desc'])
-	})).optional().describe('Sorteringsdefinisjon')
-}).strict();
+export const RegistreringPrimaerklasseArgs = z.object({
+	/** Primærklasseringens tittel som skal brukes i søket */
+	classTitle: z.string().describe('Tittel på primærklassering som registreringen skal hentes på'),
+});
+export type RegistreringPrimaerklasseArgsType = z.infer<typeof RegistreringPrimaerklasseArgs>;
 
 /**
- * TypeScript type for the Documaster query tool arguments
+ * Zod schema for hent_registrering_sekundaerklasse tool arguments
  */
-export type DocumentmasterQueryArgsType = z.infer<typeof DocumentmasterQueryArgs>; 
+export const RegistreringSekundaerklasseArgs = z.object({
+	/** Sekundærklasseringens tittel som skal brukes i søket */
+	classTitle: z.string().describe('Tittel på sekundærklassering som registreringen skal hentes på'),
+});
+export type RegistreringSekundaerklasseArgsType = z.infer<typeof RegistreringSekundaerklasseArgs>;
+
+/**
+ * Zod schema for hent_registrering_registreringsIdent tool arguments
+ */
+export const RegistreringIdentArgs = z.object({
+	/** Registreringsidentifikator som skal brukes i søket */
+	registreringsIdent: z.string().describe('Registreringsidentifikator som registreringen skal hentes på'),
+});
+export type RegistreringIdentArgsType = z.infer<typeof RegistreringIdentArgs>;
+
+/**
+ * Zod schema for hent_registrering_saksnummer tool arguments
+ */
+export const RegistreringSaksnummerArgs = z.object({
+	/** Saksnummer (mappeIdent) som skal brukes i søket */
+	saksnummer: z.string().describe('Saksnummer (mappeIdent) som registreringen skal hentes på, f.eks. "2022/109"'),
+});
+export type RegistreringSaksnummerArgsType = z.infer<typeof RegistreringSaksnummerArgs>;
+
+/**
+ * Zod schema for hent_registrering_id tool arguments
+ */
+export const RegistreringIdArgs = z.object({
+	/** ID til registreringen som skal hentes */
+	registreringsId: z.string().describe('ID til registreringen som skal hentes, f.eks. "7368480"'),
+});
+export type RegistreringIdArgsType = z.infer<typeof RegistreringIdArgs>; 

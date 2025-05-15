@@ -188,10 +188,10 @@ class DocumentmasterController {
 					foundIn,
 					highlights: allHighlights,
 					url: journalpostId ? 
-						`${baseUrlRaw}/rms/client/entry/${journalpostId}` : 
+						this.buildEntityUrl('registry-entry', journalpostId) : 
 						(saksmappeId ? 
-							`${baseUrlRaw}/rms/client/case/${saksmappeId}` : 
-							dokumentId ? `${baseUrlRaw}/rms/client/document/${dokumentId}` : '')
+							this.buildEntityUrl('case-file', saksmappeId) : 
+							dokumentId ? this.buildEntityUrl('document', dokumentId) : '')
 				};
 			}).slice(0, limit);
 			
@@ -346,6 +346,28 @@ class DocumentmasterController {
 			}
 			throw new Error(`Feil ved query: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
 		}
+	}
+
+	/**
+	 * Bygg en URL til Documaster klient-grensesnitt for en gitt entitetstype og ID
+	 * 
+	 * @param entityType Type entitet ('case-file', 'folder', 'registry-entry', 'record', 'document')
+	 * @param entityId ID til entiteten
+	 * @returns URL til entiteten i Documaster-grensesnittet
+	 */
+	buildEntityUrl(entityType: string, entityId: string): string {
+		if (!entityId) return '';
+		
+		const baseUrl = this.getApiBaseUrl();
+		// Fjern eventuelle avsluttende skråstreker
+		const baseUrlRaw = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+		
+		// Fjern eventuelle porter og rms-stier i URL-en siden vi skal bruke /v2/entity/
+		const baseUrlWithoutPort = baseUrlRaw.replace(/:\d+/, '');
+		// Fjern også /rms om det finnes i URL-en
+		const cleanBaseUrl = baseUrlWithoutPort.replace(/\/rms\/?$/, '');
+		
+		return `${cleanBaseUrl}/v2/entity/${entityType}/${entityId}`;
 	}
 }
 

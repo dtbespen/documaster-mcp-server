@@ -133,7 +133,7 @@ export type RegistreringIdArgsType = z.infer<typeof RegistreringIdArgs>;
  */
 export const DokumentversjonRegistreringsIdArgs = z.object({
 	/** ID til registreringen som skal brukes i søket */
-	registreringID: z.string().describe('ID til registrering som dokumentversjoner skal hentes for'),
+	registreringsId: z.string().describe('ID til registrering som dokumentversjoner skal hentes for'),
 }).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
 export type DokumentversjonRegistreringsIdArgsType = z.infer<typeof DokumentversjonRegistreringsIdArgs>;
 
@@ -151,7 +151,7 @@ export type DokumentIdArgsType = z.infer<typeof DokumentIdArgs>;
  */
 export const DokumentversjonRegistreringsIdentArgs = z.object({
 	/** RegistreringsIdent som skal brukes i søket */
-	registreringID: z.string().describe('Registreringsnummer (registreringsIdent) som dokumentversjoner skal hentes for, f.eks. "2024/4219"'),
+	registreringsIdent: z.string().describe('Registreringsnummer (registreringsIdent) som dokumentversjoner skal hentes for, f.eks. "2024/4219"'),
 }).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
 export type DokumentversjonRegistreringsIdentArgsType = z.infer<typeof DokumentversjonRegistreringsIdentArgs>;
 

@@ -154,11 +154,17 @@ async function testSearch(token) {
  * Prosesserer søkeresultater til vårt interne format
  */
 function processSearchResults(data, baseUrlRaw) {
+  // Ekstraher bare domenet uten porter
+  const domainMatch = baseUrlRaw.match(/(https?:\/\/[^:\/]+)/);
+  const domain = domainMatch ? domainMatch[1] : baseUrlRaw.replace(/:\d+/, '').replace(/\/rms.*$/, '');
+  
   return (data.results || []).map((item, index) => {
     // Ekstraher IDs fra hierarkiet
     const dokumentId = item.ids['Dokument.id']?.[0] || '';
     const journalpostId = item.ids['AbstraktRegistrering.id']?.[0] || '';
+    const basisregistreringId = item.ids['Basisregistrering.id']?.[0] || '';
     const saksmappeId = item.ids['AbstraktMappe.id']?.[0] || '';
+    const mappeId = item.ids['Mappe.id']?.[0] || '';
     const korrespondansepartId = item.ids['Korrespondansepart.id']?.[0] || '';
     
     // Finn ut hvor treffet ble funnet ved å se på highlights
@@ -178,21 +184,33 @@ function processSearchResults(data, baseUrlRaw) {
       });
     });
     
+    // Bestem URL basert på tilgjengelige ID-er, i prioritert rekkefølge
+    let url = '';
+    if (journalpostId) {
+      url = `${domain}/v2/entity/registry-entry/${journalpostId}`;
+    } else if (basisregistreringId) {
+      url = `${domain}/v2/entity/record/${basisregistreringId}`;
+    } else if (saksmappeId) {
+      url = `${domain}/v2/entity/case-file/${saksmappeId}`;
+    } else if (mappeId) {
+      url = `${domain}/v2/entity/folder/${mappeId}`;
+    } else if (dokumentId) {
+      url = `${domain}/v2/entity/document/${dokumentId}`;
+    }
+    
     return {
-      id: journalpostId || saksmappeId || dokumentId || `result-${index}`,
+      id: journalpostId || basisregistreringId || saksmappeId || mappeId || dokumentId || `result-${index}`,
       dokumentId,
       journalpostId,
+      basisregistreringId,
       saksmappeId,
+      mappeId,
       korrespondansepartId,
       title: `Treff i ${foundIn.split('.').pop() || 'dokument'}`, // Forenklet tittel basert på hvor treffet er funnet
       documentType: 'Arkivdokument',
       foundIn,
       highlights: allHighlights,
-      url: journalpostId ? 
-        `${baseUrlRaw}/rms/client/entry/${journalpostId}` : 
-        (saksmappeId ? 
-          `${baseUrlRaw}/rms/client/case/${saksmappeId}` : 
-          dokumentId ? `${baseUrlRaw}/rms/client/document/${dokumentId}` : '')
+      url
     };
   });
 }

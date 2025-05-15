@@ -9,7 +9,6 @@ import { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
 import { runCli } from './cli/index.js';
 
 // Import resources
-import ipAddressResources from './resources/ipaddress.resource.js';
 import documasterTools from './tools/documaster.tool.js';
 
 /**
@@ -66,6 +65,10 @@ export async function startServer(
 		serverLogger.info('Using STDIO transport for MCP communication');
 		transportInstance = new StdioServerTransport();
 	} else {
+	//	transportInstance = new SSEServerTransport({
+	//		port: 8080,
+	//		host: 'localhost',
+	//	});
 		throw createUnexpectedError('SSE mode is not supported yet');
 	}
 
@@ -76,7 +79,6 @@ export async function startServer(
 
 	// Register resources
 	serverLogger.info('Registering MCP resources...');
-	ipAddressResources.registerResources(serverInstance);
 	serverLogger.debug('Registered all resources');
 
 	serverLogger.info('All tools and resources registered successfully');

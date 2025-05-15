@@ -349,6 +349,75 @@ class DocumentmasterController {
 	}
 
 	/**
+	 * Normaliserer en entitetstype til standard format
+	 * Håndterer ulike variasjoner og synonymer for entitetstypene
+	 * 
+	 * @param entityType Entitetstype som skal normaliseres
+	 * @returns Normalisert entitetstype ('case-file', 'folder', 'registry-entry', 'record', 'document')
+	 * @private
+	 */
+	private normalizeEntityType(entityType: string): string {
+		const methodLogger = Logger.forContext(
+			'controllers/documaster.controller.ts',
+			'normalizeEntityType',
+		);
+		
+		// Gjør input til lowercase for konsistens
+		const type = entityType.toLowerCase().trim();
+		
+		// Definer mappinger av varianter
+		const typeMap: Record<string, string> = {
+			// Case-file varianter
+			'case-file': 'case-file',
+			'casefile': 'case-file',
+			'case': 'case-file',
+			'saksmappe': 'case-file',
+			'sak': 'case-file',
+			'saksdokument': 'case-file',
+			
+			// Folder varianter
+			'folder': 'folder',
+			'mappe': 'folder',
+			
+			// Registry-entry varianter
+			'registry-entry': 'registry-entry',
+			'registryentry': 'registry-entry',
+			'registry': 'registry-entry',
+			'journalpost': 'registry-entry',
+			'journal': 'registry-entry',
+			'entry': 'registry-entry',
+			'post': 'registry-entry',
+			
+			// Record varianter
+			'record': 'record',
+			'basisregistrering': 'record',
+			'registrering': 'record',
+			
+			// Document varianter
+			'document': 'document',
+			'dokument': 'document',
+			'doc': 'document',
+			'fil': 'document',
+			'file': 'document'
+		};
+		
+		// Finn normalisert type fra mappingen
+		const normalizedType = typeMap[type];
+		
+		if (!normalizedType) {
+			methodLogger.warn(`Ukjent entitetstype "${entityType}", bruker "document" som fallback`);
+			return 'document';
+		}
+		
+		// Hvis innkommende type ikke er identisk med den normaliserte, logg det
+		if (type !== normalizedType) {
+			methodLogger.debug(`Normaliserte entitetstype fra "${type}" til "${normalizedType}"`);
+		}
+		
+		return normalizedType;
+	}
+
+	/**
 	 * Bygg en URL til Documaster klient-grensesnitt for en gitt entitetstype og ID
 	 * 
 	 * @param entityType Type entitet ('case-file', 'folder', 'registry-entry', 'record', 'document')
@@ -356,18 +425,38 @@ class DocumentmasterController {
 	 * @returns URL til entiteten i Documaster-grensesnittet
 	 */
 	buildEntityUrl(entityType: string, entityId: string): string {
+		const methodLogger = Logger.forContext(
+			'controllers/documaster.controller.ts',
+			'buildEntityUrl',
+		);
+		
 		if (!entityId) return '';
+		
+		// Normaliser entitetstypen
+		const normalizedEntityType = this.normalizeEntityType(entityType);
 		
 		const baseUrl = this.getApiBaseUrl();
 		// Fjern eventuelle avsluttende skråstreker
 		const baseUrlRaw = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 		
-		// Fjern eventuelle porter og rms-stier i URL-en siden vi skal bruke /v2/entity/
-		const baseUrlWithoutPort = baseUrlRaw.replace(/:\d+/, '');
-		// Fjern også /rms om det finnes i URL-en
-		const cleanBaseUrl = baseUrlWithoutPort.replace(/\/rms\/?$/, '');
+		// Ekstraher bare domenet uten porter
+		const domainMatch = baseUrlRaw.match(/(https?:\/\/[^:\/]+)/);
+		const domain = domainMatch ? domainMatch[1] : baseUrlRaw.replace(/:\d+/, '').replace(/\/rms.*$/, '');
 		
-		return `${cleanBaseUrl}/v2/entity/${entityType}/${entityId}`;
+		// Bygg korrekt URL med /v2/entity/ format
+		const resultUrl = `${domain}/v2/entity/${normalizedEntityType}/${entityId}`;
+		
+		methodLogger.debug('Built entity URL', { 
+			baseUrl, 
+			baseUrlRaw, 
+			domain, 
+			entityType,
+			normalizedEntityType, 
+			entityId, 
+			resultUrl 
+		});
+		
+		return resultUrl;
 	}
 }
 

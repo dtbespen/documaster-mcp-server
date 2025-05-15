@@ -103,11 +103,44 @@ async function handleSearch(args: DocumentmasterSearchArgsType) {
 		if (searchResults.length === 0) {
 			resultText += "Ingen resultater funnet.";
 		} else {
-			resultText += `Fant ${searchResults.length} treff i arkivet. Se fullstendige data i den strukturerte responsen.\n\n`;
-			resultText += `\nFor å hente fullstendig informasjon om et dokument eller journalpost, bruk \`query_documaster\` verktøyet med relevant ID.`;
+			resultText += `Fant ${searchResults.length} treff i arkivet.\n\n`;
+			
+			// Legg til klikkbare lenker for hvert resultat
+			searchResults.forEach((result, index) => {
+				const title = result.title || `Resultat ${index + 1}`;
+				
+				if (result.url) {
+					resultText += `${index + 1}. [${title}](${result.url})`;
+				} else {
+					resultText += `${index + 1}. ${title}`;
+				}
+				
+				// Legg til ID-informasjon som er relevant
+				const ids = [];
+				if (result.journalpostId) ids.push(`Journalpost: ${result.journalpostId}`);
+				if (result.saksmappeId) ids.push(`Saksmappe: ${result.saksmappeId}`);
+				if (result.dokumentId) ids.push(`Dokument: ${result.dokumentId}`);
+				
+				if (ids.length > 0) {
+					resultText += ` (${ids.join(', ')})`;
+				}
+				
+				resultText += '\n';
+				
+				// Legg til treff-kontekst hvis tilgjengelig
+				if (result.highlights && result.highlights.length > 0) {
+					// Begrens til 2 highlights per resultat for å holde responsen ryddig
+					const limitedHighlights = result.highlights.slice(0, 2);
+					resultText += `   *Treff i: ${limitedHighlights.join(' ... ')}*\n\n`;
+				} else {
+					resultText += '\n';
+				}
+			});
+			
+			resultText += `\nFor å hente fullstendig informasjon om et dokument eller journalpost, bruk et av spesifikke Documaster-verktøyene med relevante parametere.`;
 		}
 
-		// Return the formatted results as Markdown
+		// Return the formatted results with Markdown
 		return {
 			content: [
 				{
@@ -205,6 +238,61 @@ async function handleMappeId(args: MappeIdArgsType) {
 }
 
 /**
+ * Genererer en lesbar oppsummering av resultatene med klikkbare Markdown-lenker
+ * 
+ * @param results Resultatlisten med URL-er
+ * @param entityType Type entitet (mappe, journalpost, etc.) for bedre beskrivelser
+ * @returns Markdown-formatert tekst med klikkbare lenker
+ */
+function generateReadableSummary(results: any[], queryType: string): string {
+	if (results.length === 0) {
+		return "Ingen resultater funnet.";
+	}
+	
+	// Bestem riktig beskrivelse basert på type spørring
+	let entityTypeDesc = "dokumenter";
+	if (queryType.includes('Mappe')) {
+		entityTypeDesc = "mapper";
+	} else if (queryType.includes('Registrering')) {
+		entityTypeDesc = "journalposter";
+	} else if (queryType.includes('Dokument')) {
+		entityTypeDesc = "dokumenter";
+	}
+	
+	let summary = `### Fant ${results.length} ${entityTypeDesc} i Documaster\n\n`;
+	
+	// Legg til informasjon om resultatene med klikkbare lenker
+	results.forEach((item, index) => {
+		// Bruk tittel eller systemID eller en annen identifikator
+		const title = item.tittel || item.systemID || item.mappeIdent || item.registreringsIdent || `Resultat ${index + 1}`;
+		
+		// Legg til klikkbar lenke hvis URL er tilgjengelig
+		if (item.url) {
+			summary += `${index + 1}. [${title}](${item.url})`;
+		} else {
+			summary += `${index + 1}. ${title}`;
+		}
+		
+		// Legg til ekstra informasjon hvis tilgjengelig
+		if (item.mappeIdent) {
+			summary += ` (Saksnr: ${item.mappeIdent})`;
+		}
+		if (item.registreringsIdent) {
+			summary += ` (Journalnr: ${item.registreringsIdent})`;
+		}
+		if (item.dokumentnummer) {
+			summary += ` (Dok.nr: ${item.dokumentnummer})`;
+		}
+		
+		summary += '\n';
+	});
+	
+	summary += "\nFor detaljert data, se den strukturerte JSON-responsen nedenfor.\n";
+	
+	return summary;
+}
+
+/**
  * @function handleSpecificMappeQuery
  * @description Felles hjelpefunksjon som utfører queryEntities og formatterer svaret
  *
@@ -237,9 +325,19 @@ async function handleSpecificMappeQuery(queryBody: any) { // eslint-disable-line
 			results: resultsWithUrls,
 		};
 
+		// Lag en lesbar oppsummering med klikkbare lenker
+		const readableSummary = generateReadableSummary(resultsWithUrls, queryBody.type);
+
 		return {
 			content: [
-				{ type: 'text' as const, text: JSON.stringify(responseObj, null, 2) },
+				{ 
+					type: 'text' as const, 
+					text: readableSummary 
+				},
+				{ 
+					type: 'text' as const, 
+					text: JSON.stringify(responseObj, null, 2) 
+				},
 			],
 		};
 	} catch (error) {
@@ -295,9 +393,16 @@ async function handleRegistreringPrimaerklasse(args: RegistreringPrimaerklasseAr
 		// Legg til URL-er for registreringene
 		const resultsWithUrls = addUrlsToResults(result.results, 'registry-entry');
 
+		// Lag en lesbar oppsummering med klikkbare lenker
+		const readableSummary = generateReadableSummary(resultsWithUrls, queryArgs.type);
+
 		// Format the result for MCP response
 		return {
 			content: [
+				{
+					type: "text" as const,
+					text: readableSummary
+				},
 				{
 					type: "text" as const,
 					text: JSON.stringify({
@@ -670,7 +775,7 @@ async function handleDokumentId(args: DokumentIdArgsType) {
 
 /**
  * @function handleDokumentversjonRegistreringsIdent
- * @description Handler for the hent_dokumentversjon_registreringsIdent MCP tool.
+ * @description Handler for the hent_dokversjon_regIdent MCP tool.
  * Fetches document versions based on registration ident.
  * 
  * @param args - The arguments for the tool
@@ -961,8 +1066,8 @@ Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnitte
 		);
 
 		server.tool(
-			'hent_dokumentversjon_registreringsIdent',
-			`Henter dokumentversjoner basert på registreringsIdent.
+			'hent_dokversjon_regIdent',
+			`Henter dokumentversjoner basert på registreringsIdent (journalpostIdent).
 Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
 Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
 			DokumentversjonRegistreringsIdentArgs.shape,

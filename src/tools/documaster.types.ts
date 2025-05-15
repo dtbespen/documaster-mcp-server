@@ -147,7 +147,7 @@ export const DokumentIdArgs = z.object({
 export type DokumentIdArgsType = z.infer<typeof DokumentIdArgs>;
 
 /**
- * Zod schema for hent_dokumentversjon_registreringsIdent tool arguments
+ * Zod schema for hent_dokversjon_regIdent tool arguments
  */
 export const DokumentversjonRegistreringsIdentArgs = z.object({
 	/** RegistreringsIdent som skal brukes i søket */

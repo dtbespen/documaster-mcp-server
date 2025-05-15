@@ -6,23 +6,22 @@ import { Logger } from './utils/logger.util.js';
 import { config } from './utils/config.util.js';
 import { createUnexpectedError } from './utils/error.util.js';
 import { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
-import { runCli } from './cli/index.js';
 
 // Import resources
 import documasterTools from './tools/documaster.tool.js';
 
 /**
- * Boilerplate MCP Server
+ * Documaster MCP Server
  *
- * A template project for building MCP servers that follow best practices.
- * Demonstrates proper structure, logging, error handling, and MCP protocol integration.
+ * MCP-server for å integrere med Documaster API.
+ * Følger MCP-protokoll med god struktur, logging og feilhåndtering.
  */
 
 // Create file-level logger
 const indexLogger = Logger.forContext('index.ts');
 
 // Log initialization at debug level
-indexLogger.debug('Boilerplate MCP server module loaded');
+indexLogger.debug('Documaster MCP server module loaded');
 
 let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
@@ -52,7 +51,7 @@ export async function startServer(
 	serverLogger.debug(`DEBUG environment variable: ${process.env.DEBUG}`);
 	serverLogger.debug(`Config DEBUG value: ${config.get('DEBUG')}`);
 
-	serverLogger.info(`Initializing Boilerplate MCP server v${VERSION}`);
+	serverLogger.info(`Initializing Documaster MCP server v${VERSION}`);
 	serverInstance = new McpServer({
 		name: PACKAGE_NAME,
 		version: VERSION,
@@ -95,7 +94,6 @@ export async function startServer(
 
 /**
  * Main entry point - this will run when executed directly
- * Determines whether to run in CLI or server mode based on command-line arguments
  */
 async function main() {
 	const mainLogger = Logger.forContext('index.ts', 'main');
@@ -107,18 +105,10 @@ async function main() {
 	mainLogger.debug(`DEBUG environment variable: ${process.env.DEBUG}`);
 	mainLogger.debug(`Config DEBUG value: ${config.get('DEBUG')}`);
 
-	// Check if arguments are provided (CLI mode)
-	if (process.argv.length > 2) {
-		// CLI mode: Pass arguments to CLI runner
-		mainLogger.info('Starting in CLI mode');
-		await runCli(process.argv.slice(2));
-		mainLogger.info('CLI execution completed');
-	} else {
-		// MCP Server mode: Start server with default STDIO
-		mainLogger.info('Starting in server mode');
-		await startServer();
-		mainLogger.info('Server is now running');
-	}
+	// MCP Server mode: Start server with default STDIO
+	mainLogger.info('Starting in server mode');
+	await startServer();
+	mainLogger.info('Server is now running');
 }
 
 // If this file is being executed directly (not imported), run the main function

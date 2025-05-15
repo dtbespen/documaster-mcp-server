@@ -917,10 +917,20 @@ async function handleFilInnhold(args: FilInnholdArgsType) {
 			contentLength: fileResult.content.length 
 		});
 
-		// Format the search results for display
-		let resultText = `### Filinnhold\n\n`;
-		resultText += `**Filnavn:** ${fileResult.metadata.fileName}\n`;
-		resultText += `**Filtype:** ${fileResult.metadata.fileType}\n`;
+		// Forbedret formatering av resultatet med mer kontekstuell informasjon
+		let resultText = `### Filinnhold fra Documaster\n\n`;
+		
+		// Metadata-seksjon
+		resultText += `#### Fildetaljer\n`;
+		resultText += `**FilID:** ${args.filId}\n`;
+		
+		if (fileResult.metadata.fileName) {
+			resultText += `**Filnavn:** ${fileResult.metadata.fileName}\n`;
+		}
+		
+		if (fileResult.metadata.fileType) {
+			resultText += `**Filtype:** ${fileResult.metadata.fileType}\n`;
+		}
 		
 		if (fileResult.metadata.pageCount) {
 			resultText += `**Antall sider:** ${fileResult.metadata.pageCount}\n`;
@@ -931,7 +941,33 @@ async function handleFilInnhold(args: FilInnholdArgsType) {
 			resultText += `**Filstørrelse:** ${fileSizeKB} KB\n`;
 		}
 		
-		resultText += `\n### Innhold:\n\n${fileResult.content}\n`;
+		// Sjekk om dokumentId eksisterer i metadata (TypeScript vet ikke om dette feltet)
+		if (fileResult.metadata && 'documentId' in fileResult.metadata && fileResult.metadata.documentId) {
+			resultText += `**Tilknyttet dokument-ID:** ${fileResult.metadata.documentId} *(Kan brukes med hent_dokumentversjon_dokumentId)*\n`;
+		}
+		
+		// Sjekk om documentVersionId eksisterer i metadata (TypeScript vet ikke om dette feltet)
+		if (fileResult.metadata && 'documentVersionId' in fileResult.metadata && fileResult.metadata.documentVersionId) {
+			resultText += `**Tilknyttet dokumentversjon-ID:** ${fileResult.metadata.documentVersionId} *(Kan brukes med hent_dokumentversjon_id)*\n`;
+		}
+		
+		// Forklaring om hvordan denne filen relaterer seg til dokumentversjonen
+		resultText += `\n**Om denne filen:** Dette er selve filinnholdet som er knyttet til en dokumentversjon. Hver dokumentversjon har et felt kalt 'referanseDokumentfil' som inneholder ID-en som brukes for å hente dette innholdet.\n\n`;
+		
+		// Innholdsseksjon
+		resultText += `#### Innhold\n\n`;
+		
+		// Legg til innholdet, eller en melding hvis innholdet er tomt
+		if (fileResult.content && fileResult.content.trim().length > 0) {
+			resultText += `${fileResult.content}\n`;
+		} else {
+			resultText += `*Filinnholdet kunne ikke konverteres til tekst eller er tomt. Dette kan skje med bildefiler eller andre ikke-tekstbaserte dokumenter.*\n`;
+		}
+		
+		// Legg til tips om videre steg
+		resultText += `\n#### Neste steg\n`;
+		resultText += `- For å finne flere dokumenter i samme journalpost, bruk 'hent_dokversjon_regId' med journalpost-ID\n`;
+		resultText += `- For å finne dokumenter i samme sak, bruk 'hent_dokumentversjon_saksId' med saks-ID\n`;
 
 		// Sanitize content preview to ensure it's valid JSON-compatible text
 		// Remove any control characters or special sequences that might break JSON parsing
@@ -954,8 +990,18 @@ async function handleFilInnhold(args: FilInnholdArgsType) {
 					type: 'text' as const,
 					// Safely stringify the JSON object with sanitized content
 					text: JSON.stringify({
-						metadata: fileResult.metadata,
-						contentPreview: contentPreview
+						metadata: {
+							...fileResult.metadata,
+							source: "Documaster",
+							retrievedWith: "hent_filinnhold",
+							contentPreviewLength: contentPreview.length,
+							fullContentLength: fileResult.content.length
+						},
+						contentPreview: contentPreview,
+						relationships: {
+							documentVersionTools: "Bruk 'hent_dokumentversjon_id' med dokumentversjon-ID for relaterte metadata",
+							documentTools: "Bruk 'hent_dokumentversjon_dokumentId' med dokument-ID for å finne alle versjoner"
+						}
 					}, null, 2)
 				}
 			],
@@ -998,10 +1044,59 @@ async function handleDokumentversjonRegId(args: DokumentversjonRegIdArgsType) {
 
 		// Legg til URL-er for dokumentversjonene
 		const resultsWithUrls = addUrlsToResults(result.results, 'record');
+		
+		// Forbedret lesbar formatering med mer kontekstuell informasjon
+		let readableOutput = `### Dokumentversjoner for journalpost (ID: ${args.registreringsId})\n\n`;
+		
+		if (resultsWithUrls.length === 0) {
+			readableOutput += "Ingen dokumentversjoner funnet for denne journalposten.\n";
+		} else {
+			readableOutput += `Fant ${resultsWithUrls.length} dokumentversjon${resultsWithUrls.length > 1 ? 'er' : ''}.\n\n`;
+			
+			// Legg til informasjon om hver dokumentversjon
+			resultsWithUrls.forEach((item, index) => {
+				const title = item.tittel || `Dokumentversjon ${index + 1}`;
+				
+				// Først linjen med tittel og lenke
+				readableOutput += `${index + 1}. [${title}](${item.url || '#'})\n`;
+				
+				// Legg til filnavn hvis tilgjengelig
+				if (item.filnavn) {
+					readableOutput += `   **Filnavn:** ${item.filnavn}\n`;
+				}
+				
+				// Legg til format/filtype hvis tilgjengelig
+				if (item.format) {
+					readableOutput += `   **Format:** ${item.format}\n`;
+				}
+				
+				// Legg til dokumentversjon-ID og referanse til filinnhold
+				readableOutput += `   **Dokumentversjon-ID:** ${item.id}\n`;
+				
+				// Viktig: Legg til referanse til filID hvis den finnes
+				if (item.referanseDokumentfil) {
+					readableOutput += `   **FilID:** ${item.referanseDokumentfil} *(Bruk denne med hent_filinnhold for å hente selve innholdet)*\n`;
+				}
+				
+				// Legg til dokument-ID hvis tilgjengelig
+				if (item.refDokument && item.refDokument.id) {
+					readableOutput += `   **Dokument-ID:** ${item.refDokument.id} *(Bruk denne med hent_dokumentversjon_dokumentId for å finne alle versjoner)*\n`;
+				}
+				
+				readableOutput += "\n";
+			});
+			
+			// Tips om videre bruk
+			readableOutput += "**Tips:** For å hente selve filinnholdet, bruk verktøyet 'hent_filinnhold' med FilID-en fra 'referanseDokumentfil'-feltet.\n";
+		}
 
 		// Format the result for MCP response
 		return {
 			content: [
+				{
+					type: "text" as const,
+					text: readableOutput
+				},
 				{
 					type: "text" as const,
 					text: JSON.stringify({
@@ -1012,6 +1107,10 @@ async function handleDokumentversjonRegId(args: DokumentversjonRegIdArgsType) {
 							query: {
 								type: queryArgs.type,
 								registreringsId: args.registreringsId
+							},
+							nextSteps: {
+								getFileContent: "Bruk 'hent_filinnhold' med FilID fra 'referanseDokumentfil'-feltet for å hente selve innholdet",
+								getDocumentVersions: "Bruk 'hent_dokumentversjon_dokumentId' med Dokument-ID for å se alle versjoner av et dokument"
 							}
 						}
 					}, null, 2)
@@ -1095,6 +1194,7 @@ export function registerTools(server: McpServer) {
 	logger.debug('Registering Documaster tools');
 	
 	try {
+		// === INTERNE VERKTØY ===
 		server.tool(
 			'documaster_test_auth',
 			`[INTERNT] Tester autentisering mot Documaster API ved å hente et OAuth2 token. Returnerer resultat og en maskert versjon av tokenet ved suksess.`,
@@ -1102,6 +1202,7 @@ export function registerTools(server: McpServer) {
 			handleTestAuth,
 		);
 
+		// === SØK ===
 		server.tool(
 			'search_documaster',
 			`Søker i Documaster sine arkiver etter dokumenter basert på søkeord og filtreringsvalg.
@@ -1111,135 +1212,190 @@ Bruk dette verktøyet når brukeren vil finne relevante dokumenter i Documaster 
 			handleSearch,
 		);
 		
+		// === MAPPE/SAKER ===
+		// Disse verktøyene hjelper deg å finne mapper/saker i Documaster
 		server.tool(
 			'hent_mappe_primaerklasse',
-			`Henter en mappe basert på angitt primærklassering (tittel på klasse).
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter mapper (saker) basert på angitt primærklassering (hovedkategori).
+Mapper er saker i Documaster som inneholder journalposter og dokumenter.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en mappe, kan du bruke ID-en med hent_registrering_saksnummer for å finne journalposter i saken.`,
 			MappePrimaerklasseArgs.shape,
 			handleMappePrimaerklasse,
 		);
 		
 		server.tool(
 			'hent_mappe_sekundaerklasse',
-			`Henter en mappe basert på angitt sekundærklassering (tittel på klasse).
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter mapper (saker) basert på angitt sekundærklassering (underkategori).
+Mapper er saker i Documaster som inneholder journalposter og dokumenter.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en mappe, kan du bruke ID-en med hent_registrering_saksnummer for å finne journalposter i saken.`,
 			MappeSekundaerklasseArgs.shape,
 			handleMappeSekundaerklasse,
 		);
 
 		server.tool(
 			'hent_mappe_saksnummer',
-			`Henter en mappe basert på saksnummer (mappeIdent).
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter mapper (saker) basert på saksnummer (mappeIdent, f.eks. "2022/109").
+Dette er det synlige saksnummeret i Documaster-systemet.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en mappe, kan du bruke ID-en med hent_registrering_saksnummer for å finne journalposter i saken.`,
 			MappeSaksnummerArgs.shape,
 			handleMappeSaksnummer,
 		);
 
 		server.tool(
 			'hent_mappe_id',
-			`Henter en mappe basert på intern ID.
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter en spesifikk mappe (sak) basert på intern ID.
+ID-en kan du finne i resultater fra sakssøk eller andre verktøy som returnerer mapper.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en mappe, kan du bruke ID-en med hent_dokumentversjon_saksId for å finne alle dokumentversjoner i saken.`,
 			MappeIdArgs.shape,
 			handleMappeId,
 		);
 
+		// === JOURNALPOSTER (REGISTRERINGER) ===
+		// Disse verktøyene hjelper deg å finne journalposter i Documaster
 		server.tool(
 			'hent_registrering_primaerklasse',
-			`Henter registreringer basert på primærklassering (tittel på klasse).
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter journalposter (registreringer) basert på primærklassering (hovedkategori).
+Journalposter er innkommende eller utgående brev/dokumenter som er registrert i en sak.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en journalpost, kan du bruke ID-en med hent_dokversjon_regId for å finne dokumentversjoner.`,
 			RegistreringPrimaerklasseArgs.shape,
 			handleRegistreringPrimaerklasse,
 		);
 
 		server.tool(
 			'hent_registrering_sekundaerklasse',
-			`Henter registreringer basert på sekundærklassering (tittel på klasse).
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter journalposter (registreringer) basert på sekundærklassering (underkategori).
+Journalposter er innkommende eller utgående brev/dokumenter som er registrert i en sak.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en journalpost, kan du bruke ID-en med hent_dokversjon_regId for å finne dokumentversjoner.`,
 			RegistreringSekundaerklasseArgs.shape,
 			handleRegistreringSekundaerklasse,
 		);
 
 		server.tool(
 			'hent_registrering_ident',
-			`Henter registreringer basert på journalpostident.
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter journalposter (registreringer) basert på journalpostnummer (f.eks. "2024/4219").
+Dette er det synlige journalnummeret i Documaster-systemet.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en journalpost, kan du bruke ID-en med hent_dokversjon_regId for å finne dokumentversjoner.`,
 			RegistreringIdentArgs.shape,
 			handleRegistreringIdent,
 		);
 
 		server.tool(
 			'hent_registrering_saksnummer',
-			`Henter registreringer basert på saksnummer (mappeIdent).
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter journalposter (registreringer) basert på saksnummer (mappeIdent, f.eks. "2022/109").
+Dette gir deg alle journalposter som tilhører en bestemt sak.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en journalpost, kan du bruke ID-en med hent_dokversjon_regId for å finne dokumentversjoner.`,
 			RegistreringSaksnummerArgs.shape,
 			handleRegistreringSaksnummer,
 		);
 
 		server.tool(
 			'hent_registrering_id',
-			`Henter en registrering basert på intern ID.
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter en spesifikk journalpost (registrering) basert på intern ID.
+ID-en kan du finne i resultater fra journalpostsøk eller andre verktøy som returnerer journalposter.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet en journalpost, kan du bruke ID-en med hent_dokversjon_regId for å finne dokumentversjoner.`,
 			RegistreringIdArgs.shape,
 			handleRegistreringId,
 		);
 		
+		// === DOKUMENTVERSJONER ===
+		// Disse verktøyene hjelper deg å finne dokumentversjoner som inneholder lenker til selve filene
 		server.tool(
 			'hent_dokversjon_regId',
-			`Henter dokumentversjoner basert på registreringsID.
-Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			`Henter dokumentversjoner basert på journalpost-ID.
+Dokumentversjoner inneholder metadata om og lenke til selve filen.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: I hvert dokumentversjonsobjekt finner du feltet "referanseDokumentfil" som inneholder ID-en du trenger for å hente selve filinnholdet med hent_filinnhold-verktøyet.`,
 			DokumentversjonRegIdArgs.shape,
 			handleDokumentversjonRegId,
 		);
 
 		server.tool(
-			'hent_dokument_id',
-			`Henter ett dokument basert på dokumentID.
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
-			DokumentIdArgs.shape,
-			handleDokumentId,
-		);
-
-		server.tool(
 			'hent_dokversjon_regIdent',
-			`Henter dokumentversjoner basert på registreringsIdent (journalpostIdent).
+			`Henter dokumentversjoner basert på journalnummer (registreringsIdent, f.eks. "2024/4219").
+Dette er det synlige journalnummeret i Documaster-systemet.
 Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: I hvert dokumentversjonsobjekt finner du feltet "referanseDokumentfil" som inneholder ID-en du trenger for å hente selve filinnholdet med hent_filinnhold-verktøyet.`,
 			DokumentversjonRegistreringsIdentArgs.shape,
 			handleDokumentversjonRegistreringsIdent,
 		);
 
 		server.tool(
 			'hent_dokumentversjon_id',
-			`Henter en dokumentversjon basert på dokumentversjonID.
+			`Henter en spesifikk dokumentversjon basert på dokumentversjon-ID.
+ID-en kan du finne i resultater fra andre dokumentversjonssøk.
 Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: I dokumentversjonsobjektet finner du feltet "referanseDokumentfil" som inneholder ID-en du trenger for å hente selve filinnholdet med hent_filinnhold-verktøyet.`,
 			DokumentversjonIdArgs.shape,
 			handleDokumentversjonId,
 		);
 
 		server.tool(
 			'hent_dokumentversjon_dokumentId',
-			`Henter dokumentversjoner basert på dokument-ID.
+			`Henter alle versjoner av et dokument basert på dokument-ID.
+ID-en kan du finne i søkeresultater eller i dokumentversjonenes "refDokument.id"-felt.
 Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: I hvert dokumentversjonsobjekt finner du feltet "referanseDokumentfil" som inneholder ID-en du trenger for å hente selve filinnholdet med hent_filinnhold-verktøyet.`,
 			DokumentversjonDokumentIdArgs.shape,
 			handleDokumentversjonDokumentId,
 		);
 
 		server.tool(
 			'hent_dokumentversjon_saksId',
-			`Henter alle dokumentversjoner på en sak, basert på id på saken.
+			`Henter alle dokumentversjoner tilknyttet en sak, basert på sakens ID.
+ID-en kan du finne i resultater fra sakssøk i feltet "id".
 Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
-Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: I hvert dokumentversjonsobjekt finner du feltet "referanseDokumentfil" som inneholder ID-en du trenger for å hente selve filinnholdet med hent_filinnhold-verktøyet.`,
 			DokumentversjonSaksIdArgs.shape,
 			handleDokumentversjonSaksId,
 		);
 
+		// === DOKUMENTER ===
+		server.tool(
+			'hent_dokument_id',
+			`Henter ett dokument basert på dokumentID.
+Et dokument kan ha flere versjoner (dokumentversjoner) som inneholder lenker til selve filene.
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.
+
+Tips: Når du har funnet et dokument, kan du bruke ID-en med hent_dokumentversjon_dokumentId for å finne alle versjoner av dokumentet.`,
+			DokumentIdArgs.shape,
+			handleDokumentId,
+		);
+
+		// === FILINNHOLD ===
 		server.tool(
 			'hent_filinnhold',
-			`Henter filinnhold fra filen i arkivet basert på id på referanseDokumentfil. Filen er tilkoblet en dokumentversjon med feltet referanseDokumentfil.
-Konverterer og returnerer innholdet av filen som tekst, spesielt for PDF-filer.`,
+			`Henter selve innholdet i en fil basert på filID.
+FilID finner du i dokumentversjonsobjekter i feltet "referanseDokumentfil".
+Konverterer og returnerer innholdet av filen som tekst, spesielt nyttig for PDF-filer.
+
+Tips: Dette er det siste steget i prosessen for å få tak i det faktiske innholdet i et dokument. Bruk først andre verktøy for å finne dokumentversjonen, deretter dette verktøyet med filID-en fra "referanseDokumentfil"-feltet.`,
 			FilInnholdArgs.shape,
 			handleFilInnhold,
 		);

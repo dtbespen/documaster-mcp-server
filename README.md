@@ -1,385 +1,246 @@
-# Boilerplate MCP Server
+# Documaster MCP Server
 
-This project serves as a foundation for developing custom Model Context Protocol (MCP) servers that connect AI assistants to external data sources or APIs. It provides a complete architecture pattern, a working example tool, and development infrastructure ready for extension.
-
----
-
-# Overview
-
-## What is MCP?
-
-Model Context Protocol (MCP) is an open standard that allows AI systems to securely and contextually connect with external tools and data sources.
-
-This boilerplate implements the MCP specification with a clean, layered architecture that can be extended to build custom MCP servers for any API or data source.
-
-## Why Use This Boilerplate?
-
-- **Production-Ready Architecture**: Follows the same pattern used in published MCP servers, with clear separation between CLI, tools, controllers, and services.
-
-- **Type Safety**: Built with TypeScript for improved developer experience, code quality, and maintainability.
-
-- **Working Example**: Includes a fully implemented IP lookup tool demonstrating the complete pattern from CLI to API integration.
-
-- **Testing Framework**: Comes with testing infrastructure for both unit and CLI integration tests, including coverage reporting.
-
-- **Development Tooling**: Includes ESLint, Prettier, TypeScript, and other quality tools preconfigured for MCP server development.
+Dette prosjektet er en Model Context Protocol (MCP) server som lar AI-assistenter koble til Documaster sitt API for å søke og hente ut informasjon fra arkivsystemer. Serveren følger MCP-standarden og gir tilgang til Documaster-data gjennom et strukturert API.
 
 ---
 
-# Getting Started
+# Oversikt
 
-## Prerequisites
+## Hva er MCP?
 
-- **Node.js** (>=18.x): [Download](https://nodejs.org/)
-- **Git**: For version control
+Model Context Protocol (MCP) er en åpen standard som lar AI-systemer koble til eksterne verktøy og datakilder på en sikker og kontekstuell måte. Denne implementasjonen bruker MCP for å gi tilgang til Documaster sitt arkivsystem.
+
+## Funksjonalitet
+
+- **Documaster-integrasjon**: Kobler seg direkte til Documaster sitt API med OAuth2-autentisering
+- **Søkefunksjonalitet**: Lar AI-assistenter søke i arkiverte dokumenter
+- **Strukturert tilgang**: Gir mulighet til å hente mapper og journalpostdata basert på ulike kriterier
+- **Sikker autentisering**: Håndterer autentisering og autorisasjon mot Documaster-API-et
 
 ---
 
-## Step 1: Clone and Install
+# Komme i gang
+
+## Forutsetninger
+
+- **Node.js** (>=18.x): [Last ned](https://nodejs.org/)
+- **Git**: For versjonskontroll
+- **Documaster API-tilgang**: Du trenger Client ID og Client Secret fra Documaster
+
+---
+
+## Steg 1: Klone og installere
 
 ```bash
-# Clone the repository
-git clone https://github.com/aashari/boilerplate-mcp-server.git
-cd boilerplate-mcp-server
+# Klone repository
+git clone https://github.com/neo/documaster-mcp-server.git
+cd documaster-mcp-server
 
-# Install dependencies
+# Installer avhengigheter
 npm install
 ```
 
 ---
 
-## Step 2: Run Development Server
+## Steg 2: Konfigurer tilgang
 
-Start the server in development mode:
+Opprett en `.env`-fil basert på `.env.example`:
 
 ```bash
-npm run dev:server
+cp .env.example .env
 ```
 
-This starts the MCP server with hot-reloading and enables the MCP Inspector at http://localhost:5173.
+Rediger `.env`-filen og legg inn dine Documaster-tilgangsnøkler:
 
----
-
-## Step 3: Test the Example Tool
-
-Run the example IP lookup tool from the CLI:
-
-```bash
-# Using CLI in development mode
-npm run dev:cli -- get-ip-details
-
-# Or with a specific IP
-npm run dev:cli -- get-ip-details 8.8.8.8
+```
+DEBUG=true
+LOG_LEVEL=debug
+DOCUMASTER_BASE_URL=https://api.documaster.com
+DOCUMASTER_AUTH_URL=https://auth.documaster.com
+DOCUMASTER_CLIENT_ID=your_client_id
+DOCUMASTER_CLIENT_SECRET=your_client_secret
 ```
 
 ---
 
-# Architecture
+## Steg 3: Kjør utviklingsserveren
 
-This boilerplate follows a clean, layered architecture pattern that separates concerns and promotes maintainability.
+Start serveren i utviklingsmodus:
 
-## Project Structure
-
-```
-src/
-├── cli/              # Command-line interfaces
-├── controllers/      # Business logic
-├── services/         # External API interactions
-├── tools/            # MCP tool definitions
-├── types/            # Type definitions
-├── utils/            # Shared utilities
-└── index.ts          # Entry point
+```bash
+npm run dev
 ```
 
-## Layers and Responsibilities
-
-### CLI Layer (`src/cli/*.cli.ts`)
-
-- **Purpose**: Define command-line interfaces that parse arguments and call controllers
-- **Naming**: Files should be named `<feature>.cli.ts`
-- **Testing**: CLI integration tests in `<feature>.cli.test.ts`
-
-### Tools Layer (`src/tools/*.tool.ts`)
-
-- **Purpose**: Define MCP tools with schemas and descriptions for AI assistants
-- **Naming**: Files should be named `<feature>.tool.ts` with types in `<feature>.types.ts`
-- **Pattern**: Each tool should use zod for argument validation
-
-### Controllers Layer (`src/controllers/*.controller.ts`)
-
-- **Purpose**: Implement business logic, handle errors, and format responses
-- **Naming**: Files should be named `<feature>.controller.ts`
-- **Pattern**: Should return standardized `ControllerResponse` objects
-
-### Services Layer (`src/services/*.service.ts`)
-
-- **Purpose**: Interact with external APIs or data sources
-- **Naming**: Files should be named `<feature>.service.ts`
-- **Pattern**: Pure API interactions with minimal logic
-
-### Utils Layer (`src/utils/*.util.ts`)
-
-- **Purpose**: Provide shared functionality across the application
-- **Key Utils**:
-    - `logger.util.ts`: Structured logging
-    - `error.util.ts`: Error handling and standardization
-    - `formatter.util.ts`: Markdown formatting helpers
+Dette starter MCP-serveren med hot-reloading.
 
 ---
 
-# Development Guide
+# Arkitektur
 
-## Development Scripts
+Prosjektet følger en strukturert, lagdelt arkitektur som skiller mellom ulike ansvarsområder og fremmer vedlikeholdbarhet.
+
+## Prosjektstruktur
+
+```
+documaster-mcp-server/
+├── dist/              # Kompilert JavaScript-kode
+├── src/               # TypeScript kildekode
+│   ├── controllers/   # Forretningslogikk
+│   ├── models/        # Datamodeller
+│   ├── services/      # Ekstern API-interaksjon
+│   ├── tools/         # MCP-verktøydefinisjoner
+│   ├── types/         # Typedefinisjoner
+│   ├── utils/         # Delte hjelpefunksjoner
+│   └── index.ts       # Innganspunkt
+├── tests/             # Testfiler
+│   ├── controllers/   # Controller-tester
+│   ├── scripts/       # Testscript for API-testing
+│   ├── services/      # Service-tester
+│   └── tools/         # MCP-verktøy-tester
+├── scripts/           # Hjelpescripts
+├── tasks/             # Task Master oppgaver
+├── .env               # Miljøvariabel-konfigurasjon
+└── smithery.yaml      # Smithery-konfigurasjon for MCP
+```
+
+## Lag og ansvarsområder
+
+### MCP Verktøy (`src/tools/*.tool.ts`)
+
+- **Formål**: Definere MCP-verktøy med skjema og beskrivelser for AI-assistenter
+- **Primære filer**: 
+  - `documaster.tool.ts`: Implementerer alle MCP-verktøy for Documaster-integrasjon
+  - `documaster.types.ts`: Definerer typene for verktøyenes argumenter
+
+### Controllers (`src/controllers/*.controller.ts`)
+
+- **Formål**: Implementere forretningslogikk, håndtere feil og formatere svar
+- **Primær fil**: `documaster.controller.ts`: Implementerer logikk for å kommunisere med Documaster API
+
+### Tjenester (`src/services/*.service.ts`)
+
+- **Formål**: Kommunisere med eksterne API-er eller datakilder
+- **Primær fil**: `documaster.oauth2.service.ts`: Håndterer OAuth2-autentisering mot Documaster
+
+### Modeller (`src/models/*.model.ts`)
+
+- **Formål**: Definere datastrukturer for objektene som hentes fra Documaster
+- **Primær fil**: `documentmaster.model.ts`: Definerer datamodeller for dokumenter og mapper
+
+### Hjelpebiblioteker (`src/utils/*.util.ts`)
+
+- **Formål**: Tilby delt funksjonalitet på tvers av applikasjonen
+- **Nøkkelfiler**:
+  - `logger.util.ts`: Strukturert logging
+  - `error.util.ts`: Feilhåndtering og standardisering
+  - `transport.util.ts`: HTTP-forespørselshåndtering
+  - `documaster-config.util.ts`: Konfigurasjon for Documaster-API
+
+---
+
+# Tilgjengelige MCP-verktøy
+
+Serveren eksponerer følgende MCP-verktøy for interaksjon med Documaster:
+
+## Søk og autentisering
+
+- `documaster_test_auth`: Tester autentisering mot Documaster API
+- `search_documaster`: Søker etter dokumenter basert på søkeord og filtreringsalternativer
+
+## Mappeverktøy
+
+- `hent_mappe_primaerklasse`: Henter mapper basert på primærklasseringens tittel
+- `hent_mappe_sekundaerklasse`: Henter mapper basert på sekundærklasseringens tittel
+- `hent_mappe_saksnummer`: Henter mapper basert på saksnummer (mappeIdent)
+- `hent_mappe_id`: Henter mapper basert på intern ID
+
+## Registreringsverktøy (journalpost)
+
+- `hent_registrering_primaerklasse`: Henter registreringer basert på primærklassering
+- `hent_registrering_sekundaerklasse`: Henter registreringer basert på sekundærklassering
+- `hent_registrering_ident`: Henter registreringer basert på journalpostident
+- `hent_registrering_saksnummer`: Henter registreringer basert på saksnummer
+- `hent_registrering_id`: Henter en registrering basert på intern ID
+
+## Dokumentverktøy
+
+- `hent_dokument_id`: Henter ett dokument basert på dokument-ID
+- `hent_dokumentversjon_id`: Henter dokumentversjon basert på versjon-ID
+- `hent_dokumentversjon_dokumentId`: Henter dokumentversjoner basert på dokument-ID
+- `hent_dokumentversjon_registreringsId`: Henter dokumentversjoner basert på registrerings-ID
+- `hent_dokversjon_regIdent`: Henter dokumentversjoner basert på registreringsIdent
+
+---
+
+# Utvikling
+
+## Utviklingsscripts
 
 ```bash
-# Start server in development mode (hot-reload & inspector)
-npm run dev:server
+# Start server i utviklingsmodus (hot-reload)
+npm run dev
 
-# Run CLI in development mode
-npm run dev:cli -- [command] [args]
-
-# Build the project
+# Bygg prosjektet
 npm run build
 
-# Start server in production mode
-npm run start:server
+# Start server i produksjonsmodus
+npm start
 
-# Run CLI in production mode
-npm run start:cli -- [command] [args]
+# Kjør tester
+npm test
+
+# Generer test-dekning rapport
+npm run test:coverage
 ```
 
 ## Testing
 
 ```bash
-# Run all tests
+# Kjør alle tester
 npm test
 
-# Run specific tests
-npm test -- src/path/to/test.ts
-
-# Generate test coverage report
-npm run test:coverage
+# Kjør spesifikke tester
+npm test -- tests/path/to/test.ts
 ```
 
-## Code Quality
+## Kodekvalitet
 
 ```bash
-# Lint code
+# Lint kode
 npm run lint
 
-# Format code with Prettier
+# Formater kode med Prettier
 npm run format
 
-# Check types
+# Sjekk typer
 npm run typecheck
 ```
 
 ---
 
-# Building Custom Tools
+# Konfigurasjon
 
-Follow these steps to add your own tools to the server:
+## Miljøvariabler
 
-## 1. Define Service Layer
+Serveren bruker følgende miljøvariabler (defineres i `.env`):
 
-Create a new service in `src/services/` to interact with your external API:
-
-```typescript
-// src/services/example.service.ts
-import { Logger } from '../utils/logger.util.js';
-
-const logger = Logger.forContext('services/example.service.ts');
-
-export async function getData(param: string): Promise<any> {
-	logger.debug('Getting data', { param });
-	// API interaction code here
-	return { result: 'example data' };
-}
-```
-
-## 2. Create Controller
-
-Add a controller in `src/controllers/` to handle business logic:
-
-```typescript
-// src/controllers/example.controller.ts
-import { Logger } from '../utils/logger.util.js';
-import * as exampleService from '../services/example.service.js';
-import { formatMarkdown } from '../utils/formatter.util.js';
-import { handleControllerError } from '../utils/error-handler.util.js';
-import { ControllerResponse } from '../types/common.types.js';
-
-const logger = Logger.forContext('controllers/example.controller.ts');
-
-export interface GetDataOptions {
-	param?: string;
-}
-
-export async function getData(
-	options: GetDataOptions = {},
-): Promise<ControllerResponse> {
-	try {
-		logger.debug('Getting data with options', options);
-
-		const data = await exampleService.getData(options.param || 'default');
-
-		const content = formatMarkdown(data);
-
-		return { content };
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'ExampleData',
-			operation: 'getData',
-			source: 'controllers/example.controller.ts',
-		});
-	}
-}
-```
-
-## 3. Implement MCP Tool
-
-Create a tool definition in `src/tools/`:
-
-```typescript
-// src/tools/example.tool.ts
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
-import { Logger } from '../utils/logger.util.js';
-import { formatErrorForMcpTool } from '../utils/error.util.js';
-import * as exampleController from '../controllers/example.controller.js';
-
-const logger = Logger.forContext('tools/example.tool.ts');
-
-const GetDataArgs = z.object({
-	param: z.string().optional().describe('Optional parameter'),
-});
-
-type GetDataArgsType = z.infer<typeof GetDataArgs>;
-
-async function handleGetData(args: GetDataArgsType) {
-	try {
-		logger.debug('Tool get_data called', args);
-
-		const result = await exampleController.getData({
-			param: args.param,
-		});
-
-		return {
-			content: [{ type: 'text' as const, text: result.content }],
-		};
-	} catch (error) {
-		logger.error('Tool get_data failed', error);
-		return formatErrorForMcpTool(error);
-	}
-}
-
-export function register(server: McpServer) {
-	server.tool(
-		'get_data',
-		`Gets data from the example API, optionally using \`param\`.
-Use this to fetch example data. Returns formatted data as Markdown.`,
-		GetDataArgs.shape,
-		handleGetData,
-	);
-}
-```
-
-## 4. Add CLI Support
-
-Create a CLI command in `src/cli/`:
-
-```typescript
-// src/cli/example.cli.ts
-import { program } from 'commander';
-import { Logger } from '../utils/logger.util.js';
-import * as exampleController from '../controllers/example.controller.js';
-import { handleCliError } from '../utils/error-handler.util.js';
-
-const logger = Logger.forContext('cli/example.cli.ts');
-
-program
-	.command('get-data')
-	.description('Get example data')
-	.option('--param <value>', 'Optional parameter')
-	.action(async (options) => {
-		try {
-			logger.debug('CLI get-data called', options);
-
-			const result = await exampleController.getData({
-				param: options.param,
-			});
-
-			console.log(result.content);
-		} catch (error) {
-			handleCliError(error);
-		}
-	});
-```
-
-## 5. Register Components
-
-Update the entry points to register your new components:
-
-```typescript
-// In src/cli/index.ts
-import '../cli/example.cli.js';
-
-// In src/index.ts (for the tool)
-import exampleTool from './tools/example.tool.js';
-// Then in registerTools function:
-exampleTool.register(server);
-```
+- `DEBUG`: Aktiverer debug-logging når satt til "true"
+- `LOG_LEVEL`: Logger-nivå (debug, info, warn, error)
+- `DOCUMASTER_BASE_URL`: Base-URL for Documaster API
+- `DOCUMASTER_AUTH_URL`: URL for OAuth2-autentisering
+- `DOCUMASTER_CLIENT_ID`: Client ID for Documaster API
+- `DOCUMASTER_CLIENT_SECRET`: Client Secret for Documaster API
 
 ---
 
-# Debugging Tools
+# Docker
 
-## MCP Inspector
-
-Access the visual MCP Inspector to test your tools and view request/response details:
-
-1. Run `npm run dev:server`
-2. Open http://localhost:5173 in your browser
-3. Test your tools and view logs directly in the UI
-
-## Server Logs
-
-Enable debug logs for development:
+Prosjektet inkluderer en Dockerfile for containerisering:
 
 ```bash
-# Set environment variable
-DEBUG=true npm run dev:server
+# Bygg Docker-image
+docker build -t documaster-mcp-server .
 
-# Or configure in ~/.mcp/configs.json
+# Kjør Docker container
+docker run -p 3000:3000 --env-file .env documaster-mcp-server
 ```
-
----
-
-# Publishing Your MCP Server
-
-When ready to publish your custom MCP server:
-
-1. Update package.json with your details
-2. Update README.md with your tool documentation
-3. Build the project: `npm run build`
-4. Test the production build: `npm run start:server`
-5. Publish to npm: `npm publish`
-
----
-
-# License
-
-[ISC License](https://opensource.org/licenses/ISC)
-
-```json
-{
-	"boilerplate": {
-		"environments": {
-			"DEBUG": "true",
-			"ANY_OTHER_CONFIG": "value"
-		}
-	}
-}
-```
-
-**Note:** For backward compatibility, the server will also recognize configurations under the full package name (`@aashari/boilerplate-mcp-server`) or the unscoped package name (`boilerplate-mcp-server`) if the `boilerplate` key is not found. However, using the short `boilerplate` key is recommended for new configurations.

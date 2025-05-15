@@ -34,6 +34,8 @@ import {
 	DokumentversjonIdArgsType,
 	DokumentversjonDokumentIdArgs,
 	DokumentversjonDokumentIdArgsType,
+	DokumentversjonSaksIdArgs,
+	DokumentversjonSaksIdArgsType,
 	FilInnholdArgs,
 	FilInnholdArgsType
 } from './documaster.types.js';
@@ -677,9 +679,9 @@ async function handleDokumentversjonRegistreringsId(args: DokumentversjonRegistr
 	try {
 		// Build query
 		const queryArgs = {
-			type: 'DokumentObjekt',
-			limit: 20,
-			query: 'refDokumentbeskrivelse.refRegistrering.id = @registreringsId',
+			type: 'Dokumentversjon',
+			limit: 10,
+			query: 'refDokument.refRegistrering.id = @registreringsId',
 			parameters: {
 				'@registreringsId': args.registreringsId
 			}
@@ -793,9 +795,9 @@ async function handleDokumentversjonRegistreringsIdent(args: DokumentversjonRegi
 	try {
 		// Build query
 		const queryArgs = {
-			type: 'DokumentObjekt',
-			limit: 20,
-			query: 'refDokumentbeskrivelse.refRegistrering.journalpostIdent = @registreringsIdent',
+			type: 'Dokumentversjon',
+			limit: 10,
+			query: 'refDokument.refRegistrering.registreringsIdent = @registreringsIdent',
 			parameters: {
 				'@registreringsIdent': args.registreringsIdent
 			}
@@ -851,7 +853,7 @@ async function handleDokumentversjonId(args: DokumentversjonIdArgsType) {
 	try {
 		// Build query
 		const queryArgs = {
-			type: 'DokumentObjekt',
+			type: 'Dokumentversjon',
 			limit: 10,
 			query: 'id = @dokumentversjonId',
 			parameters: {
@@ -909,9 +911,9 @@ async function handleDokumentversjonDokumentId(args: DokumentversjonDokumentIdAr
 	try {
 		// Build query
 		const queryArgs = {
-			type: 'DokumentObjekt',
-			limit: 20,
-			query: 'refDokumentbeskrivelse.refDokument.id = @dokumentId',
+			type: 'Dokumentversjon',
+			limit: 10,
+			query: 'refDokument.id = @dokumentId',
 			parameters: {
 				'@dokumentId': args.dokumentId
 			}
@@ -937,6 +939,64 @@ async function handleDokumentversjonDokumentId(args: DokumentversjonDokumentIdAr
 							query: {
 								type: queryArgs.type,
 								dokumentId: args.dokumentId
+							}
+						}
+					}, null, 2)
+				}
+			]
+		};
+	} catch (error) {
+		methodLogger.error('Failed to query Documaster', { error });
+		throw error;
+	}
+}
+
+/**
+ * @function handleDokumentversjonSaksId
+ * @description Handler for the hent_dokumentversjon_saksId MCP tool.
+ * Fetches document versions related to a specific case (folder) ID.
+ * 
+ * @param args - The arguments for the tool
+ * @returns A text response containing the formatted query results
+ */
+async function handleDokumentversjonSaksId(args: DokumentversjonSaksIdArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/documaster.tool.ts',
+		'handleDokumentversjonSaksId',
+	);
+	methodLogger.debug(`Querying Documaster for document versions by case ID...`, { mappeId: args.mappeId });
+
+	try {
+		// Build query
+		const queryArgs = {
+			type: 'Dokumentversjon',
+			limit: 10,
+			query: 'refDokument.refRegistrering.refMappe.id = @mappeId',
+			parameters: {
+				'@mappeId': args.mappeId
+			}
+		};
+
+		// Call the controller
+		const result = await documasterController.queryEntities(queryArgs);
+		methodLogger.debug(`Got query result from controller`, { count: result.results.length });
+
+		// Legg til URL-er for dokumentversjonene
+		const resultsWithUrls = addUrlsToResults(result.results, 'record');
+
+		// Format the result for MCP response
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify({
+						results: resultsWithUrls,
+						metadata: {
+							total: result.results.length,
+							hasMore: result.hasMore,
+							query: {
+								type: queryArgs.type,
+								mappeId: args.mappeId
 							}
 						}
 					}, null, 2)
@@ -1165,6 +1225,15 @@ Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referans
 Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
 			DokumentversjonDokumentIdArgs.shape,
 			handleDokumentversjonDokumentId,
+		);
+
+		server.tool(
+			'hent_dokumentversjon_saksId',
+			`Henter alle dokumentversjoner på en sak, basert på id på saken.
+Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
+Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
+			DokumentversjonSaksIdArgs.shape,
+			handleDokumentversjonSaksId,
 		);
 
 		server.tool(

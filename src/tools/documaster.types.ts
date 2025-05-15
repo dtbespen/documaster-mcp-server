@@ -174,6 +174,15 @@ export const DokumentversjonDokumentIdArgs = z.object({
 export type DokumentversjonDokumentIdArgsType = z.infer<typeof DokumentversjonDokumentIdArgs>;
 
 /**
+ * Zod schema for hent_dokumentversjon_saksId tool arguments
+ */
+export const DokumentversjonSaksIdArgs = z.object({
+	/** ID til saken (mappen) som skal brukes i søket */
+	mappeId: z.string().describe('ID til saken/mappen som dokumentversjoner skal hentes for'),
+}).describe('Henter alle dokumentversjoner på en sak, basert på id på saken. Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil").');
+export type DokumentversjonSaksIdArgsType = z.infer<typeof DokumentversjonSaksIdArgs>;
+
+/**
  * Zod schema for hent_filinnhold tool arguments
  */
 export const FilInnholdArgs = z.object({

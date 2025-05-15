@@ -129,13 +129,13 @@ export const RegistreringIdArgs = z.object({
 export type RegistreringIdArgsType = z.infer<typeof RegistreringIdArgs>;
 
 /**
- * Zod schema for hent_dokumentversjon_registreringsId tool arguments
+ * Zod schema for hent_dokversjon_regId tool arguments
  */
-export const DokumentversjonRegistreringsIdArgs = z.object({
+export const DokumentversjonRegIdArgs = z.object({
 	/** ID til registreringen som skal brukes i søket */
 	registreringsId: z.string().describe('ID til registrering som dokumentversjoner skal hentes for'),
 }).describe('Dokumentversjon inneholder metadata om og lenke til selve filen (i feltet "referanseDokumentfil"). Bruk dette verktøyet når du trenger å finne filinnhold.');
-export type DokumentversjonRegistreringsIdArgsType = z.infer<typeof DokumentversjonRegistreringsIdArgs>;
+export type DokumentversjonRegIdArgsType = z.infer<typeof DokumentversjonRegIdArgs>;
 
 /**
  * Zod schema for hent_dokument_id tool arguments

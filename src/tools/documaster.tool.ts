@@ -24,11 +24,9 @@ import {
 	RegistreringIdentArgsType,
 	RegistreringSaksnummerArgsType,
 	RegistreringIdArgsType,
-	DokumentversjonRegistreringsIdArgs,
 	DokumentIdArgs,
 	DokumentversjonRegistreringsIdentArgs,
 	DokumentversjonIdArgs,
-	DokumentversjonRegistreringsIdArgsType,
 	DokumentIdArgsType,
 	DokumentversjonRegistreringsIdentArgsType,
 	DokumentversjonIdArgsType,
@@ -36,6 +34,8 @@ import {
 	DokumentversjonDokumentIdArgsType,
 	DokumentversjonSaksIdArgs,
 	DokumentversjonSaksIdArgsType,
+	DokumentversjonRegIdArgs,
+	DokumentversjonRegIdArgsType,
 	FilInnholdArgs,
 	FilInnholdArgsType
 } from './documaster.types.js';
@@ -662,122 +662,6 @@ async function handleRegistreringId(args: RegistreringIdArgsType) {
 }
 
 /**
- * @function handleDokumentversjonRegistreringsId
- * @description Handler for the hent_dokumentversjon_registreringsId MCP tool.
- * Fetches document versions based on registration ID.
- * 
- * @param args - The arguments for the tool
- * @returns A text response containing the formatted query results
- */
-async function handleDokumentversjonRegistreringsId(args: DokumentversjonRegistreringsIdArgsType) {
-	const methodLogger = Logger.forContext(
-		'tools/documaster.tool.ts',
-		'handleDokumentversjonRegistreringsId',
-	);
-	methodLogger.debug(`Querying Documaster for document versions by registration ID...`, { registreringsId: args.registreringsId });
-
-	try {
-		// Build query
-		const queryArgs = {
-			type: 'Dokumentversjon',
-			limit: 10,
-			query: 'refDokument.refRegistrering.id = @registreringsId',
-			parameters: {
-				'@registreringsId': args.registreringsId
-			}
-		};
-
-		// Call the controller
-		const result = await documasterController.queryEntities(queryArgs);
-		methodLogger.debug(`Got query result from controller`, { count: result.results.length });
-
-		// Legg til URL-er for dokumentversjonene
-		const resultsWithUrls = addUrlsToResults(result.results, 'record');
-
-		// Format the result for MCP response
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify({
-						results: resultsWithUrls,
-						metadata: {
-							total: result.results.length,
-							hasMore: result.hasMore,
-							query: {
-								type: queryArgs.type,
-								registreringsId: args.registreringsId
-							}
-						}
-					}, null, 2)
-				}
-			]
-		};
-	} catch (error) {
-		methodLogger.error('Failed to query Documaster', { error });
-		throw error;
-	}
-}
-
-/**
- * @function handleDokumentId
- * @description Handler for the hent_dokument_id MCP tool.
- * Fetches document by its ID.
- * 
- * @param args - The arguments for the tool
- * @returns A text response containing the formatted query results
- */
-async function handleDokumentId(args: DokumentIdArgsType) {
-	const methodLogger = Logger.forContext(
-		'tools/documaster.tool.ts',
-		'handleDokumentId',
-	);
-	methodLogger.debug(`Querying Documaster for document by ID...`, { dokumentId: args.dokumentId });
-
-	try {
-		// Build query
-		const queryArgs = {
-			type: 'Dokument',
-			limit: 10,
-			query: 'id = @dokumentId',
-			parameters: {
-				'@dokumentId': args.dokumentId
-			}
-		};
-
-		// Call the controller
-		const result = await documasterController.queryEntities(queryArgs);
-		methodLogger.debug(`Got query result from controller`, { count: result.results.length });
-
-		// Legg til URL-er for dokumentene
-		const resultsWithUrls = addUrlsToResults(result.results, 'document');
-
-		// Format the result for MCP response
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify({
-						results: resultsWithUrls,
-						metadata: {
-							total: result.results.length,
-							hasMore: result.hasMore,
-							query: {
-								type: queryArgs.type,
-								dokumentId: args.dokumentId
-							}
-						}
-					}, null, 2)
-				}
-			]
-		};
-	} catch (error) {
-		methodLogger.error('Failed to query Documaster', { error });
-		throw error;
-	}
-}
-
-/**
  * @function handleDokumentversjonRegistreringsIdent
  * @description Handler for the hent_dokversjon_regIdent MCP tool.
  * Fetches document versions based on registration ident.
@@ -1083,6 +967,122 @@ async function handleFilInnhold(args: FilInnholdArgsType) {
 }
 
 /**
+ * @function handleDokumentversjonRegId
+ * @description Handler for the hent_dokversjon_regId MCP tool.
+ * Fetches document versions based on registration ID.
+ * 
+ * @param args - The arguments for the tool
+ * @returns A text response containing the formatted query results
+ */
+async function handleDokumentversjonRegId(args: DokumentversjonRegIdArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/documaster.tool.ts',
+		'handleDokumentversjonRegId',
+	);
+	methodLogger.debug(`Querying Documaster for document versions by registration ID...`, { registreringsId: args.registreringsId });
+
+	try {
+		// Build query
+		const queryArgs = {
+			type: 'Dokumentversjon',
+			limit: 10,
+			query: 'refDokument.refRegistrering.id = @registreringsId',
+			parameters: {
+				'@registreringsId': args.registreringsId
+			}
+		};
+
+		// Call the controller
+		const result = await documasterController.queryEntities(queryArgs);
+		methodLogger.debug(`Got query result from controller`, { count: result.results.length });
+
+		// Legg til URL-er for dokumentversjonene
+		const resultsWithUrls = addUrlsToResults(result.results, 'record');
+
+		// Format the result for MCP response
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify({
+						results: resultsWithUrls,
+						metadata: {
+							total: result.results.length,
+							hasMore: result.hasMore,
+							query: {
+								type: queryArgs.type,
+								registreringsId: args.registreringsId
+							}
+						}
+					}, null, 2)
+				}
+			]
+		};
+	} catch (error) {
+		methodLogger.error('Failed to query Documaster', { error });
+		throw error;
+	}
+}
+
+/**
+ * @function handleDokumentId
+ * @description Handler for the hent_dokument_id MCP tool.
+ * Fetches document by its ID.
+ * 
+ * @param args - The arguments for the tool
+ * @returns A text response containing the formatted query results
+ */
+async function handleDokumentId(args: DokumentIdArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/documaster.tool.ts',
+		'handleDokumentId',
+	);
+	methodLogger.debug(`Querying Documaster for document by ID...`, { dokumentId: args.dokumentId });
+
+	try {
+		// Build query
+		const queryArgs = {
+			type: 'Dokument',
+			limit: 10,
+			query: 'id = @dokumentId',
+			parameters: {
+				'@dokumentId': args.dokumentId
+			}
+		};
+
+		// Call the controller
+		const result = await documasterController.queryEntities(queryArgs);
+		methodLogger.debug(`Got query result from controller`, { count: result.results.length });
+
+		// Legg til URL-er for dokumentene
+		const resultsWithUrls = addUrlsToResults(result.results, 'document');
+
+		// Format the result for MCP response
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify({
+						results: resultsWithUrls,
+						metadata: {
+							total: result.results.length,
+							hasMore: result.hasMore,
+							query: {
+								type: queryArgs.type,
+								dokumentId: args.dokumentId
+							}
+						}
+					}, null, 2)
+				}
+			]
+		};
+	} catch (error) {
+		methodLogger.error('Failed to query Documaster', { error });
+		throw error;
+	}
+}
+
+/**
  * @function registerTools
  * @description Registers the Documaster tools with the MCP server.
  *
@@ -1184,12 +1184,12 @@ Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnitte
 		);
 		
 		server.tool(
-			'hent_dokumentversjon_registreringsId',
+			'hent_dokversjon_regId',
 			`Henter dokumentversjoner basert på registreringsID.
 Dokumentversjon inneholder metadata og lenke til selve filen (i feltet "referanseDokumentfil").
 Responsen inkluderer URL-lenker til hvert resultat i Documaster web-grensesnittet.`,
-			DokumentversjonRegistreringsIdArgs.shape,
-			handleDokumentversjonRegistreringsId,
+			DokumentversjonRegIdArgs.shape,
+			handleDokumentversjonRegId,
 		);
 
 		server.tool(

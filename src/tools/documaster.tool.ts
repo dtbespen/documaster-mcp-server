@@ -37,7 +37,9 @@ import {
 	DokumentversjonRegIdArgs,
 	DokumentversjonRegIdArgsType,
 	FilInnholdArgs,
-	FilInnholdArgsType
+	FilInnholdArgsType,
+	PartsinnsynArgs,
+	PartsinnsynArgsType
 } from './documaster.types.js';
 
 /**
@@ -1182,6 +1184,175 @@ async function handleDokumentId(args: DokumentIdArgsType) {
 }
 
 /**
+ * @function handlePartsinnsyn
+ * @description Handler for partsinnsyn MCP tool. 
+ * This tool initiates a guided process for Claude to find all information related to a specific person.
+ * 
+ * @param {PartsinnsynArgsType} args - The arguments containing person information
+ * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} Instructions for Claude
+ */
+async function handlePartsinnsyn(args: PartsinnsynArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/documaster.tool.ts',
+		'handlePartsinnsyn',
+	);
+	methodLogger.debug(`Initiating partsinnsyn process...`, { personNavn: args.personNavn });
+
+	try {
+		// Valider input (selv om Zod gjør dette, ekstra validering kan legges til her)
+		if (!args.personNavn || args.personNavn.trim().length < 2) {
+			throw new Error('Personnavnet må være spesifisert og inneholde minst 2 tegn.');
+		}
+
+		// Personnummer er valgfritt, men hvis angitt bør det valideres
+		if (args.personnummer) {
+			const personnummerPattern = /^\d{11}$/;
+			if (!personnummerPattern.test(args.personnummer)) {
+				methodLogger.warn('Ugyldig personnummerformat - forventer 11 siffer');
+				// Vi kaster ikke feil her, men fortsetter med navnesøk
+			}
+		}
+
+		// Generer søkeinstruksjoner for Claude basert på input
+		const personIdentifier = args.personnummer ? 
+			`${args.personNavn} (personnummer: ${args.personnummer})` : 
+			args.personNavn;
+
+		// Lag en søkestrategi som Claude skal følge
+		const searchInstructions = `
+## Partsinnsyn-søk for ${personIdentifier}
+
+Du skal nå utføre en uttømmende søk etter all informasjon relatert til ${args.personNavn} i Documaster-arkivet. 
+Følg denne strukturerte prosessen for å sikre at du finner all relevant informasjon:
+
+### Søkestrategi:
+
+1. **Start med brede fritekstsøk**:
+   - Bruk \`search_documaster\` med personens fulle navn "${args.personNavn}"
+   - Prøv ulike navnevarianter: fornavn+etternavn, kun etternavn
+   - Hvis personnummer er oppgitt, søk også på dette: "${args.personnummer || 'ikke oppgitt'}"
+
+2. **Undersøk spesifikke mapper og journalposter**:
+   - For hver sak du finner, bruk \`hent_mappe_id\` for å få alle detaljer
+   - For hver journalpost, bruk \`hent_registrering_id\` for komplette metadata
+   - Undersøk hver sak ved å bruke \`hent_registrering_saksnummer\` for å finne alle tilknyttede journalposter
+   - Bruk \`hent_dokumentversjon_saksId\` for å finne alle dokumenter i en sak
+
+3. **Dykk ned i dokumenter**:
+   - For hver dokumentversjon, noter deg \`referanseDokumentfil\`-verdien
+   - Bruk \`hent_filinnhold\` med denne ID-en for å hente selve innholdet
+   - Analyser innholdet for å identifisere andre saker personen kan være involvert i
+
+4. **Undersøk i sekundærklasser der personopplysninger typisk finnes**:
+   - Bruk \`hent_mappe_sekundaerklasse\` og \`hent_registrering_sekundaerklasse\` for klasser som "Person", "Klient", "Bruker" o.l.
+
+### Avslutningskriterier:
+- Fortsett søket til du har gjennomført minst 3 påfølgende søk uten nye resultater
+- Spør brukeren om du skal fortsette søket eller generere rapport basert på funnene så langt
+
+### Rapportstruktur:
+Når søket er ferdig, generer en strukturert rapport med følgende elementer:
+
+1. **Sammendrag**:
+
+   ### Partsinnsyn for [Navn] (Personnummer: [xxxxxxxx])
+
+   **Oppsummering:**
+   Dette partsinnsynet viser at [Navn] har [X] saker i arkivet, primært knyttet til [hovedtema 1] og [hovedtema 2]. 
+   De mest sentrale sakene omfatter [kort beskrivelse av viktigste saker]. Dokumentasjonen strekker seg fra [første dato] 
+   til [siste dato], med hovedvekt på perioden [periode med mest aktivitet]. Flertallet av dokumentene er [type dokumenter], 
+   og de mest relevante funnene inkluderer [1-2 setninger om viktigste funn/vedtak]. Totalt er det identifisert 
+   [Y] journalposter og [Z] dokumenter som direkte angår personen.
+
+   **Søketidspunkt:** [Dato og klokkeslett]
+   **Resultater:** [X] saker, [Y] journalposter, [Z] dokumenter
+   **Tidsperiode:** [Første dato] til [Siste dato]
+   **Søkeparametere:** [Liste over brukte søkeord og filtre]
+
+2. **Kronologisk dokumentoversikt med tematisk inndeling**:
+   Presenter alle dokumenter i en detaljert tabell sortert etter dato med følgende format:
+
+   | Dato       | Dokument                       | Tema/Kategori              | Journalpost                      | Sak                                | Oppsummering                                      | Handling          |
+   |------------|--------------------------------|----------------------------|----------------------------------|------------------------------------|---------------------------------------------------|-------------------|
+   | 2023-01-16 | Byggesøknad.pdf                | Byggesak                   | [2023/4567](URL_HER)             | [2023/1234](URL_HER)               | Søknadsskjema for oppføring av garasje.           | [Se innhold→](URL_HER)|
+   |            | Format: PDF                    | (Søknadsdokument)          | Type: Inngående                  | Søknad om byggetillatelse          | Dokumentet inneholder detaljert beskrivelse       |                   |
+   |            | ID: fil-123                    |                            | Mottatt søknad fra               | Status: Under behandling           | av planlagt garasje, inkludert mål,              |                   |
+   |            |                                |                            | Person Navnesen                  | Eiendom: 12/345                    | materialer og plassering på tomten.              |                   |
+
+   **VIKTIG: Alle referanser til journalposter, saker og dokumenter MÅ implementeres som klikkbare Markdown-lenker:**
+   - Bruk Markdown-syntaksen \`[Tekst](URL)\` for alle lenker i rapporten
+   - Journalpostnumre som f.eks. \`[2023/4567](https://documaster-url/registrering/123456)\` 
+   - Saksnumre som f.eks. \`[2023/1234](https://documaster-url/sak/789012)\`
+   - Handlingsknapper som \`[Se innhold→](https://documaster-url/fil/345678)\`
+   - Sørg for at alle URL-er er komplette og fungerende
+   - Bruk URL-en fra 'url'-feltet du finner i resultatene fra API-spørringene
+
+   Tabellinnhold:
+   - Inkluder alle dokumenter sortert kronologisk med eldste først
+   - Hvert dokument skal ha metadata om format, ID og tema/kategori
+   - Journalpost- og saksinformasjon skal ALLTID vises med klikkbare lenker til Documaster (bruk [Tekst](URL)-formatet)
+   - Gi en kvalitativ oppsummering av dokumentets innhold
+   - Inkluder handling med klikkbar lenke til å se dokumentets innhold
+
+3. **Statistikk og nøkkeltall**:
+
+   ### Statistikk
+   - **Totalt antall dokumenter:** [Z]
+   - **Fordelt på temaer:** Byggesak ([X1]), Skattesak ([X2]), Andre temaer ([X3])
+   - **Dokumenttyper:** PDF ([Y1]), DOCX ([Y2]), Andre formater ([Y3])
+   - **Tidsperiode:** [Første dato] til [Siste dato] ([N] måneder)
+   - **Største sak:** [Sakstittel med klikkbar lenke](URL) med [N] journalposter og [M] dokumenter
+
+4. **Nøkkelutdrag**:
+
+   ### Sentrale sitater og tekstutdrag
+   Her presenteres viktige utdrag fra dokumentene der personen er direkte omtalt:
+
+   1. Fra **[Dokumenttittel](URL_til_dokumentet)** ([dato]):
+      > "[Direkte sitat/utdrag fra dokumentet som omhandler personen]"
+
+   2. Fra **[Dokumenttittel](URL_til_dokumentet)** ([dato]):
+      > "[Direkte sitat/utdrag fra dokumentet som omhandler personen]"
+
+5. **Nedlastingsalternativer**:
+
+   ### Nedlastingsalternativer
+   - [Last ned fullstendig dokumentasjon (ZIP)](url)
+   - [Last ned denne rapporten (PDF)](url)
+   - [Eksporter data til Excel](url)
+
+6. **Søkemetadata**:
+
+   ### Om søket
+   - **Utført av:** [Brukerens navn/Claude]
+   - **Søketidspunkt:** [Dato og klokkeslett]
+   - **Søkeparametere:** [Detaljer om søket]
+   - **Fullstendighet:** [Vurdering av søkets uttømmenhet]
+
+   Dette partsinnsyn-søket ble utført i henhold til retningslinjer for partsinnsyn etter forvaltningsloven. Søket ble gjennomført systematisk i Documaster-arkivet for å finne all relevant informasjon om [Navn].
+
+**VIKTIG OM LENKER:**
+Alle referanser til dokumenter, journalposter og saker MÅ implementeres som klikkbare Markdown-lenker med formatet [Tekst](URL). Sørg for at alle URL-er fra API-spørringene brukes korrekt slik at brukeren enkelt kan klikke på lenkene for å gå direkte til det aktuelle elementet i Documaster-systemet.
+
+Presenter rapporten i et klart, strukturert format med tydelige overskrifter og formattering. Dokumenttabellen er det sentrale elementet og bør være grundig og detaljert, med klikkbare lenker til alle elementer.
+		`;
+
+		// Returner søkeinstruksjonene til Claude
+		return {
+			content: [
+				{
+					type: 'text' as const,
+					text: searchInstructions,
+				},
+			],
+		};
+	} catch (error) {
+		methodLogger.error(`Error in partsinnsyn process`, error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * @function registerTools
  * @description Registers the Documaster tools with the MCP server.
  *
@@ -1398,6 +1569,37 @@ Konverterer og returnerer innholdet av filen som tekst, spesielt nyttig for PDF-
 Tips: Dette er det siste steget i prosessen for å få tak i det faktiske innholdet i et dokument. Bruk først andre verktøy for å finne dokumentversjonen, deretter dette verktøyet med filID-en fra "referanseDokumentfil"-feltet.`,
 			FilInnholdArgs.shape,
 			handleFilInnhold,
+		);
+
+		// Register partsinnsyn tool
+		server.tool(
+			'documaster_partsinnsyn',
+			`
+            Starter en partsinnsynsprosess for å finne alle saker, journalposter og dokumenter relatert til en spesifikk person.
+            
+            BRUK DETTE VERKTØYET når du trenger å finne alt arkivmateriale som angår en bestemt person.
+            Verktøyet gir deg en strukturert søkestrategi for å identifisere all relevant informasjon.
+            
+            Verktøyet er spesielt nyttig for:
+            - Partsinnsyn etter forvaltningsloven
+            - Kartlegging av en persons saker
+            - Innsynsbegjæringer
+            
+            Du vil få veiledning for hvordan du skal gjennomføre søket, inkludert:
+            - Hvilke søk du bør utføre
+            - Hvordan navigere gjennom resultatene
+            - Når du kan anse søket som uttømmende
+            - Hvordan strukturere funnene i en oversiktlig rapport
+            
+            Args:
+                personNavn: Fullt navn på personen det søkes partsinnsyn for
+                personnummer: Personnummer (11 siffer) for personen (valgfritt, men anbefalt for presis identifikasjon)
+                
+            Returns:
+                Detaljerte instruksjoner for hvordan du skal utføre et uttømmende søk og strukturere resultatene
+        `,
+			PartsinnsynArgs.shape,
+			handlePartsinnsyn,
 		);
 
 		logger.debug('Documaster tools registered successfully');

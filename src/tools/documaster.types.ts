@@ -193,4 +193,16 @@ export const FilInnholdArgs = z.object({
 	/** ID til referanseDokumentfil fra dokumentversjon */
 	filId: z.string().describe('ID til dokumentfilen som skal hentes. Denne ID-en finnes i dokumentversjoner i feltet "referanseDokumentfil".'),
 }).describe('Henter selve innholdet i en fil basert på filens ID. FilID finnes i dokumentversjonsobjekter i feltet "referanseDokumentfil". Tips: Hvis du har en dokumentversjon, se etter feltet "referanseDokumentfil" for å finne ID-en du trenger for dette verktøyet.');
-export type FilInnholdArgsType = z.infer<typeof FilInnholdArgs>; 
+export type FilInnholdArgsType = z.infer<typeof FilInnholdArgs>;
+
+/**
+ * Zod schema for partsinnsyn tool arguments
+ */
+export const PartsinnsynArgs = z.object({
+	/** Fullt navn på personen det søkes partsinnsyn for */
+	personNavn: z.string().describe('Fullt navn på personen det søkes partsinnsyn for.'),
+	/** Personnummer (11 siffer) for personen det søkes partsinnsyn for - valgfritt hvis navn er tilstrekkelig */
+	personnummer: z.string().optional().describe('Personnummer (11 siffer) for personen det søkes partsinnsyn for (valgfritt, men anbefalt for presis identifikasjon).'),
+}).describe('Starter en partsinnsynsprosess for å finne alle saker, journalposter og dokumenter relatert til en spesifikk person. Verktøyet vil veilede Claude gjennom en strukturert søkeprosess for å finne all relevant informasjon.');
+
+export type PartsinnsynArgsType = z.infer<typeof PartsinnsynArgs>; 
